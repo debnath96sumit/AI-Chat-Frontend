@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, User, Bot, Copy, ThumbsUp, ThumbsDown, MoreHorizontal, Plus, Menu, Settings, MessageSquare } from 'lucide-react';
-
+import { useState, useRef, useEffect } from 'react';
+import { Send, User, Bot, Copy, ThumbsUp, ThumbsDown,Menu } from 'lucide-react';
+import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
+import Sidebar from './components/Sidebar.jsx';
 const ChatBot = () => {
   const [messages, setMessages] = useState([
     {
@@ -41,16 +42,22 @@ const ChatBot = () => {
     setIsTyping(true);
 
     // Start streaming from your backend
-    const eventSource = new EventSource(`http://localhost:3000/chat/stream/${encodeURIComponent(currentInput)}`);
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+    const eventSource = new EventSource(`${backendUrl}/chat/stream/${encodeURIComponent(currentInput)}`);
     let aiText = '';
 
     eventSource.onmessage = (event) => {
+      if (event.data === '__END__') {
+        setIsTyping(false);
+        eventSource.close();
+        return;
+      }
+
       aiText += event.data;
 
       setMessages((prev) => {
         const last = prev[prev.length - 1];
         if (last?.sender === 'ai') {
-          // Update existing AI message
           return [...prev.slice(0, -1), { 
             id: last.id,
             sender: 'ai', 
@@ -59,7 +66,6 @@ const ChatBot = () => {
             timestamp: last.timestamp
           }];
         } else {
-          // Create new AI message
           return [...prev, { 
             id: Date.now() + 1,
             sender: 'ai', 
@@ -69,9 +75,6 @@ const ChatBot = () => {
           }];
         }
       });
-
-      console.log(`Received on messge data: ${event}`);
-      
     };
 
     eventSource.onclose = () => {
@@ -81,10 +84,13 @@ const ChatBot = () => {
 
     eventSource.onerror = (err) => {
       console.error('SSE error:', err);
+      if (eventSource.readyState === EventSource.CLOSED || aiText.length > 0) {
+        return;
+      }
+
       setIsTyping(false);
       eventSource.close();
-      
-      // Add error message
+
       setMessages(prev => [...prev, {
         id: Date.now() + 2,
         sender: 'ai',
@@ -106,65 +112,9 @@ const ChatBot = () => {
     navigator.clipboard.writeText(text);
   };
 
-  const conversations = [
-    { id: 1, title: "Getting Started", active: true },
-    { id: 2, title: "React Development Help" },
-    { id: 3, title: "API Integration Questions" },
-    { id: 4, title: "Design System Planning" }
-  ];
-
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-80 bg-gray-900 text-white transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0`}>
-        <div className="flex flex-col h-full">
-          {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-700">
-            <h2 className="text-lg font-semibold">ChatBot AI</h2>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-1 rounded-md hover:bg-gray-700"
-            >
-              ×
-            </button>
-          </div>
-
-          {/* New Chat Button */}
-          <div className="p-4">
-            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-600 hover:bg-gray-800 transition-colors">
-              <Plus size={16} />
-              New chat
-            </button>
-          </div>
-
-          {/* Conversations */}
-          <div className="flex-1 overflow-y-auto px-4">
-            <div className="space-y-2">
-              {conversations.map((conv) => (
-                <div
-                  key={conv.id}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer group hover:bg-gray-800 ${
-                    conv.active ? 'bg-gray-800' : ''
-                  }`}
-                >
-                  <MessageSquare size={16} className="text-gray-400" />
-                  <span className="flex-1 text-sm truncate">{conv.title}</span>
-                  <MoreHorizontal size={14} className="opacity-0 group-hover:opacity-100 text-gray-400" />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Sidebar Footer */}
-          <div className="p-4 border-t border-gray-700">
-            <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 transition-colors">
-              <Settings size={16} />
-              Settings
-            </button>
-          </div>
-        </div>
-      </div>
-
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
@@ -177,6 +127,14 @@ const ChatBot = () => {
               <Menu size={20} />
             </button>
             <h1 className="text-lg font-medium text-gray-900">AI Assistant</h1>
+          </div>
+          <div>
+            <SignedOut>
+              <SignInButton />
+            </SignedOut>
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
           </div>
         </div>
 
