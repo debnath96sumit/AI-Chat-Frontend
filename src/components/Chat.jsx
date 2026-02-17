@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, User, Bot, Copy, ThumbsUp, ThumbsDown,Menu } from 'lucide-react';
+import { Send, User, Bot, Copy, ThumbsUp, ThumbsDown, Menu, Square } from 'lucide-react';
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
-import Sidebar from './components/Sidebar.jsx';
+import Sidebar from './Sidebar.jsx';
+
 const ChatBot = () => {
   const [messages, setMessages] = useState([
     {
@@ -16,6 +17,8 @@ const ChatBot = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const eventSourceRef = useRef(null);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -23,6 +26,14 @@ const ChatBot = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const stopStream = () => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+      setIsTyping(false);
+    }
+  };
 
   const handleSendMessage = () => {
     if (!inputText.trim()) return;
@@ -44,12 +55,14 @@ const ChatBot = () => {
     // Start streaming from your backend
     const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
     const eventSource = new EventSource(`${backendUrl}/chat/stream/${encodeURIComponent(currentInput)}`);
+    eventSourceRef.current = eventSource; // Store reference
     let aiText = '';
 
     eventSource.onmessage = (event) => {
       if (event.data === '__END__') {
         setIsTyping(false);
         eventSource.close();
+        eventSourceRef.current = null;
         return;
       }
 
@@ -58,17 +71,17 @@ const ChatBot = () => {
       setMessages((prev) => {
         const last = prev[prev.length - 1];
         if (last?.sender === 'ai') {
-          return [...prev.slice(0, -1), { 
+          return [...prev.slice(0, -1), {
             id: last.id,
-            sender: 'ai', 
+            sender: 'ai',
             text: aiText,
             isBot: true,
             timestamp: last.timestamp
           }];
         } else {
-          return [...prev, { 
+          return [...prev, {
             id: Date.now() + 1,
-            sender: 'ai', 
+            sender: 'ai',
             text: aiText,
             isBot: true,
             timestamp: new Date()
@@ -79,7 +92,7 @@ const ChatBot = () => {
 
     eventSource.onclose = () => {
       setIsTyping(false);
-      eventSource.close();
+      eventSourceRef.current = null;
     };
 
     eventSource.onerror = (err) => {
@@ -90,6 +103,7 @@ const ChatBot = () => {
 
       setIsTyping(false);
       eventSource.close();
+      eventSourceRef.current = null;
 
       setMessages(prev => [...prev, {
         id: Date.now() + 2,
@@ -111,6 +125,15 @@ const ChatBot = () => {
   const copyMessage = (text) => {
     navigator.clipboard.writeText(text);
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+    };
+  }, []);
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -144,21 +167,19 @@ const ChatBot = () => {
             {messages.map((message) => (
               <div key={message.id} className={`flex gap-4 ${message.isBot || message.sender === 'ai' ? '' : 'flex-row-reverse'}`}>
                 {/* Avatar */}
-                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                  message.isBot || message.sender === 'ai'
-                    ? 'bg-green-100 text-green-600' 
+                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${message.isBot || message.sender === 'ai'
+                    ? 'bg-green-100 text-green-600'
                     : 'bg-blue-100 text-blue-600'
-                }`}>
+                  }`}>
                   {message.isBot || message.sender === 'ai' ? <Bot size={16} /> : <User size={16} />}
                 </div>
 
                 {/* Message Content */}
                 <div className={`flex-1 max-w-2xl ${message.isBot || message.sender === 'ai' ? '' : 'flex flex-col items-end'}`}>
-                  <div className={`px-4 py-3 rounded-2xl ${
-                    message.isBot || message.sender === 'ai'
-                      ? 'bg-white border border-gray-200 text-gray-900' 
+                  <div className={`px-4 py-3 rounded-2xl ${message.isBot || message.sender === 'ai'
+                      ? 'bg-white border border-gray-200 text-gray-900'
                       : 'bg-blue-600 text-white'
-                  }`}>
+                    }`}>
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
                   </div>
 
@@ -187,25 +208,6 @@ const ChatBot = () => {
                 </div>
               </div>
             ))}
-
-            {/* Typing Indicator */}
-            {isTyping && (
-              <div className="flex gap-4">
-                <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
-                  <Bot size={16} />
-                </div>
-                <div className="flex-1 max-w-2xl">
-                  <div className="px-4 py-3 rounded-2xl bg-white border border-gray-200">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
             <div ref={messagesEndRef} />
           </div>
         </div>
@@ -230,14 +232,25 @@ const ChatBot = () => {
                   e.target.style.height = 'auto';
                   e.target.style.height = Math.min(e.target.scrollHeight, 128) + 'px';
                 }}
+                disabled={isTyping} // Disable input while streaming
               />
-              <button
-                onClick={handleSendMessage}
-                disabled={!inputText.trim() || isTyping}
-                className="m-2 p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors"
-              >
-                <Send size={16} />
-              </button>
+              {isTyping ? (
+                <button
+                  onClick={stopStream}
+                  className="m-2 p-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
+                  title="Stop generating"
+                >
+                  <Square size={16} />
+                </button>
+              ) : (
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!inputText.trim()}
+                  className="m-2 p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors"
+                >
+                  <Send size={16} />
+                </button>
+              )}
             </div>
             <p className="text-xs text-gray-500 mt-2 text-center">
               AI can make mistakes. Consider checking important information.
@@ -248,7 +261,7 @@ const ChatBot = () => {
 
       {/* Overlay for mobile sidebar */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
