@@ -8,11 +8,11 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 //     };
 // }
 
-const handleResponse = async(response) => {
+const handleResponse = async (response) => {
     const data = await response.json();
 
-    if(!response.ok){
-        if(response.statusCode === 401){
+    if (!response.ok) {
+        if (response.statusCode === 401) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = '/sign-in';
@@ -34,6 +34,17 @@ export const authAPI = {
         });
         return handleResponse(response);
     },
+
+    socialSignIn: async (provider, oauthToken) => {
+        const response = await fetch(`${API_BASE_URL}/api/v1/auth/social-signin`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ oauthToken, provider })
+        });
+        return handleResponse(response);
+    }
 }
 
 export default {

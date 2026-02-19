@@ -1,10 +1,12 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { FcGoogle } from 'react-icons/fc';
 import { FaGithub } from 'react-icons/fa';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../../utils/api';
+import { GoogleLogin } from "@react-oauth/google";
 
 const SignUp = () => {
+    const googleBtnRef = useRef(null);
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         username: '',
@@ -29,14 +31,18 @@ const SignUp = () => {
         setLoading(true);
 
         try {
-            const reponse = await authAPI.signup(formData.username, formData.email, formData.password);
-            localStorage.setItem('token', reponse.token);
-            localStorage.setItem('user', JSON.stringify(reponse.user));
-            navigate('/');
+            const response = await authAPI.signup(formData.username, formData.email, formData.password);
+            if (response.ok) {
+                localStorage.setItem('token', response.token);
+                localStorage.setItem('user', JSON.stringify(response.user));
+                navigate('/dashboard');
+            } else {
+                setError(response.message ?? 'Registration failed. Please try again.')
+            }
         } catch (error) {
             setError('An error occurred. Please try again later');
             console.log('Sign up error', error);
-            
+
         } finally {
             setLoading(false);
         }
@@ -49,9 +55,29 @@ const SignUp = () => {
         setError('');
 
     }
+    const handleBackendLogin = async (idToken) => {
+        try {
+            const response = await authAPI.socialSignIn('google', idToken);
+            if (response.ok) {
+                localStorage.setItem('token', response.token);
+                localStorage.setItem('user', JSON.stringify(response.user));
+                navigate('/dashboard');
+            } else {
+                setError(response.message ?? 'Registration failed. Please try again.')
+            }
+        } catch (error) {
+            setError('An error occurred. Please try again later');
+            console.log('Sign up error', error);
+
+        } finally {
+            setLoading(false);
+        }
+    };
     const handleSocialSignIn = (provider) => {
-        window.location.href = `/api/v1/auth/social-signin?provider=${provider}`;
+        console.log(provider);
+
     }
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 px-4 py-12">
             <div className="max-w-md w-full space-y-8 bg-slate-800/50 backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-slate-700">
@@ -159,12 +185,18 @@ const SignUp = () => {
                     <div className="grid grid-cols-2 gap-3">
                         <button
                             type="button"
-                            onClick={() => handleSocialSignIn('google')}
+                            onClick={() => googleBtnRef.current?.click()}
                             className="flex items-center justify-center gap-2 px-4 py-3 border border-slate-600 rounded-lg text-white bg-slate-700/50 hover:bg-slate-700 transition"
                         >
                             <FcGoogle className="text-xl" />
                             Google
                         </button>
+                        <div className="hidden">
+                            <GoogleLogin
+                                onSuccess={(cred) => handleBackendLogin(cred.credential)}
+                                ref={googleBtnRef}
+                            />
+                        </div>
                         <button
                             type="button"
                             onClick={() => handleSocialSignIn('github')}
