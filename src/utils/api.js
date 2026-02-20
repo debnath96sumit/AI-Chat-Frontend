@@ -24,13 +24,13 @@ const handleResponse = async (response) => {
 }
 
 export const authAPI = {
-    signup: async (username, email, password) => {
+    signup: async ({ fullName, email, phone, password }) => {
         const response = await fetch(`${API_BASE_URL}/api/v1/auth/signup`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, email, password })
+            body: JSON.stringify({ fullName, email, phone, password })
         });
         return handleResponse(response);
     },
@@ -42,6 +42,17 @@ export const authAPI = {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ oauthToken, provider })
+        });
+        return handleResponse(response);
+    },
+
+    login: async ({email, password}) => {
+        const response = await fetch(`${API_BASE_URL}/api/v1/auth/login-user`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
         });
         return handleResponse(response);
     }

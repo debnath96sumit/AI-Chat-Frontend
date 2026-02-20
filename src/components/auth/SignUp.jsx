@@ -9,8 +9,9 @@ const SignUp = () => {
     const googleBtnRef = useRef(null);
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
-        username: '',
+        fullName: '',
         email: '',
+        phone: '',
         password: '',
         confirmPassword: ''
     })
@@ -31,7 +32,12 @@ const SignUp = () => {
         setLoading(true);
 
         try {
-            const response = await authAPI.signup(formData.username, formData.email, formData.password);
+            const response = await authAPI.signup({
+                fullName: formData.fullName,
+                email: formData.email,
+                phone: formData.phone,
+                password: formData.password
+            });
             if (response.ok) {
                 localStorage.setItem('token', response.token);
                 localStorage.setItem('user', JSON.stringify(response.user));
@@ -99,18 +105,18 @@ const SignUp = () => {
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
                     <div className="space-y-4">
                         <div>
-                            <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
-                                Username
+                            <label htmlFor="fullName" className="block text-sm font-medium text-gray-300 mb-2">
+                                Full Name
                             </label>
                             <input
-                                id="username"
-                                name="username"
+                                id="fullName"
+                                name="fullName"
                                 type="text"
                                 required
-                                value={formData.username}
+                                value={formData.fullName}
                                 onChange={handleChange}
                                 className="appearance-none relative block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-                                placeholder="Choose a username"
+                                placeholder="Enter your full name"
                             />
                         </div>
 
@@ -127,6 +133,21 @@ const SignUp = () => {
                                 onChange={handleChange}
                                 className="appearance-none relative block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                                 placeholder="your@email.com"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">
+                                Phone number
+                            </label>
+                            <input
+                                id="phone"
+                                name="phone"
+                                type="tel"
+                                required
+                                value={formData.phone}
+                                onChange={handleChange}
+                                className="appearance-none relative block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                                placeholder="your phone number"
                             />
                         </div>
 

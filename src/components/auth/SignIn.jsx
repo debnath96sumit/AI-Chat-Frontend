@@ -1,20 +1,49 @@
 import React, { useState } from 'react'
 import { FcGoogle } from 'react-icons/fc';
 import { FaGithub } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { authAPI } from '../../utils/api';
+
 const SignIn = () => {
+    const navigate = useNavigate();
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
-        password: ''
+        password: '',
+        rememberMe: false
     });
-    const handleSubmit = () => {
-        console.log('test');
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
 
+        try {
+            const response = await authAPI.login({
+                email: formData.email,
+                password: formData.password
+            });
+            if (response.ok) {
+                localStorage.setItem('token', response.token);
+                localStorage.setItem('user', JSON.stringify(response.user));
+                navigate('/dashboard');
+            } else {
+                setError(response.message ?? 'Login failed. Please try again.')
+            }
+        } catch (error) {
+            setError('An error occurred. Please try again later');
+            console.log('Sign up error', error);
+
+        } finally {
+            setLoading(false);
+        }
     }
-    const handleChange = () => {
-        console.log('test');
+    const handleChange = (e) => {
+         setFormData({
+            ...formData,
+            [e.target.name]: e.target.value
+        })
+        setError('');
 
     }
     const handleSocialSignIn = () => {
@@ -81,6 +110,8 @@ const SignIn = () => {
                                 name="remember-me"
                                 type="checkbox"
                                 className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-slate-600 rounded bg-slate-700"
+                                checked={formData.rememberMe}
+                                onChange={handleChange}
                             />
                             <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-300">
                                 Remember me
