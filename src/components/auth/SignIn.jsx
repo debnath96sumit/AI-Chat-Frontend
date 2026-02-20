@@ -3,11 +3,13 @@ import { FcGoogle } from 'react-icons/fc';
 import { FaGithub } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { signInSchema } from '../../utils/validationSchemas';
 
 const SignIn = () => {
     const { login } = useAuth();
     const navigate = useNavigate();
     const [error, setError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
@@ -17,12 +19,22 @@ const SignIn = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setFieldErrors({});
+
+        const parsed = signInSchema.safeParse(formData);
+        if (!parsed.success) {
+            const nextFieldErrors = parsed.error.flatten().fieldErrors;
+            setFieldErrors(nextFieldErrors);
+            setError(parsed.error.issues[0]?.message ?? 'Please fix the highlighted fields.');
+            return;
+        }
+
         setLoading(true);
 
         try {
             const response = await login({
-                email: formData.email,
-                password: formData.password
+                email: parsed.data.email,
+                password: parsed.data.password
             });
             if (response.success) {
                 navigate('/dashboard');
@@ -38,11 +50,13 @@ const SignIn = () => {
         }
     }
     const handleChange = (e) => {
+        const { name, type, value, checked } = e.target;
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value
+            [name]: type === 'checkbox' ? checked : value
         })
         setError('');
+        setFieldErrors((prev) => ({ ...prev, [name]: '' }));
 
     }
     const handleSocialSignIn = () => {
@@ -83,6 +97,9 @@ const SignIn = () => {
                                 className="appearance-none relative block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                                 placeholder="your@email.com"
                             />
+                            {fieldErrors.email?.[0] && (
+                                <p className="mt-1 text-sm text-red-400">{fieldErrors.email[0]}</p>
+                            )}
                         </div>
 
                         <div>
@@ -99,6 +116,9 @@ const SignIn = () => {
                                 className="appearance-none relative block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                                 placeholder="Enter your password"
                             />
+                            {fieldErrors.password?.[0] && (
+                                <p className="mt-1 text-sm text-red-400">{fieldErrors.password[0]}</p>
+                            )}
                         </div>
                     </div>
 
@@ -106,7 +126,7 @@ const SignIn = () => {
                         <div className="flex items-center">
                             <input
                                 id="remember-me"
-                                name="remember-me"
+                                name="rememberMe"
                                 type="checkbox"
                                 className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-slate-600 rounded bg-slate-700"
                                 checked={formData.rememberMe}

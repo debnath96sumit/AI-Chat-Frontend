@@ -4,6 +4,7 @@ import { FaGithub } from 'react-icons/fa';
 import { useNavigate, Link } from 'react-router-dom';
 import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from '../../context/AuthContext';
+import { signUpSchema } from '../../utils/validationSchemas';
 
 const SignUp = () => {
     const { signup, socialLogin } = useAuth();
@@ -17,27 +18,30 @@ const SignUp = () => {
         confirmPassword: ''
     })
     const [error, setError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        if (formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
+        setFieldErrors({});
+
+        const parsed = signUpSchema.safeParse(formData);
+        if (!parsed.success) {
+            const nextFieldErrors = parsed.error.flatten().fieldErrors;
+            setFieldErrors(nextFieldErrors);
+            setError(parsed.error.issues[0]?.message ?? 'Please fix the highlighted fields.');
             return;
         }
-        if (formData.password.length < 8) {
-            setError('Password must be at least 8 characters');
-            return;
-        }
+
         setLoading(true);
 
         try {
             const response = await signup({
-                fullName: formData.fullName,
-                email: formData.email,
-                phone: formData.phone,
-                password: formData.password
+                fullName: parsed.data.fullName,
+                email: parsed.data.email,
+                phone: parsed.data.phone,
+                password: parsed.data.password
             });
             if (response.success) {
                 navigate('/dashboard');
@@ -53,11 +57,13 @@ const SignUp = () => {
         }
     }
     const handleChange = (e) => {
+        const { name, value } = e.target;
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value
+            [name]: value
         })
         setError('');
+        setFieldErrors((prev) => ({ ...prev, [name]: '' }));
 
     }
     const handleBackendLogin = async (idToken) => {
@@ -115,6 +121,9 @@ const SignUp = () => {
                                 className="appearance-none relative block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                                 placeholder="Enter your full name"
                             />
+                            {fieldErrors.fullName?.[0] && (
+                                <p className="mt-1 text-sm text-red-400">{fieldErrors.fullName[0]}</p>
+                            )}
                         </div>
 
                         <div>
@@ -131,6 +140,9 @@ const SignUp = () => {
                                 className="appearance-none relative block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                                 placeholder="your@email.com"
                             />
+                            {fieldErrors.email?.[0] && (
+                                <p className="mt-1 text-sm text-red-400">{fieldErrors.email[0]}</p>
+                            )}
                         </div>
                         <div>
                             <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">
@@ -146,6 +158,9 @@ const SignUp = () => {
                                 className="appearance-none relative block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                                 placeholder="your phone number"
                             />
+                            {fieldErrors.phone?.[0] && (
+                                <p className="mt-1 text-sm text-red-400">{fieldErrors.phone[0]}</p>
+                            )}
                         </div>
 
                         <div>
@@ -162,6 +177,9 @@ const SignUp = () => {
                                 className="appearance-none relative block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                                 placeholder="Min. 8 characters"
                             />
+                            {fieldErrors.password?.[0] && (
+                                <p className="mt-1 text-sm text-red-400">{fieldErrors.password[0]}</p>
+                            )}
                         </div>
 
                         <div>
@@ -178,6 +196,9 @@ const SignUp = () => {
                                 className="appearance-none relative block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                                 placeholder="Re-enter your password"
                             />
+                            {fieldErrors.confirmPassword?.[0] && (
+                                <p className="mt-1 text-sm text-red-400">{fieldErrors.confirmPassword[0]}</p>
+                            )}
                         </div>
                     </div>
 
