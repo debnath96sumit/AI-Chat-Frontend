@@ -2,10 +2,11 @@ import React, { useRef, useState } from 'react'
 import { FcGoogle } from 'react-icons/fc';
 import { FaGithub } from 'react-icons/fa';
 import { useNavigate, Link } from 'react-router-dom';
-import { authAPI } from '../../utils/api';
 import { GoogleLogin } from "@react-oauth/google";
+import { useAuth } from '../../context/AuthContext';
 
 const SignUp = () => {
+    const { signup, socialLogin } = useAuth();
     const googleBtnRef = useRef(null);
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
@@ -32,21 +33,19 @@ const SignUp = () => {
         setLoading(true);
 
         try {
-            const response = await authAPI.signup({
+            const response = await signup({
                 fullName: formData.fullName,
                 email: formData.email,
                 phone: formData.phone,
                 password: formData.password
             });
-            if (response.ok) {
-                localStorage.setItem('token', response.token);
-                localStorage.setItem('user', JSON.stringify(response.user));
+            if (response.success) {
                 navigate('/dashboard');
             } else {
                 setError(response.message ?? 'Registration failed. Please try again.')
             }
         } catch (error) {
-            setError('An error occurred. Please try again later');
+            setError(error.message || 'An error occurred. Please try again later');
             console.log('Sign up error', error);
 
         } finally {
@@ -63,16 +62,14 @@ const SignUp = () => {
     }
     const handleBackendLogin = async (idToken) => {
         try {
-            const response = await authAPI.socialSignIn('google', idToken);
-            if (response.ok) {
-                localStorage.setItem('token', response.token);
-                localStorage.setItem('user', JSON.stringify(response.user));
+            const response = await socialLogin('google', idToken);
+            if (response.success) {
                 navigate('/dashboard');
             } else {
                 setError(response.message ?? 'Registration failed. Please try again.')
             }
         } catch (error) {
-            setError('An error occurred. Please try again later');
+            setError(error.message || 'An error occurred. Please try again later');
             console.log('Sign up error', error);
 
         } finally {

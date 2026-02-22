@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, User, Bot, Copy, ThumbsUp, ThumbsDown, Menu, Square } from 'lucide-react';
-import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
 import Sidebar from './Sidebar.jsx';
 
 const ChatBot = () => {
@@ -150,14 +149,6 @@ const ChatBot = () => {
               <Menu size={20} />
             </button>
             <h1 className="text-lg font-medium text-gray-900">AI Assistant</h1>
-          </div>
-          <div>
-            <SignedOut>
-              <SignInButton />
-            </SignedOut>
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
           </div>
         </div>
 

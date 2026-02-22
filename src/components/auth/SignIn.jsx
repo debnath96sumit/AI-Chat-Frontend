@@ -2,9 +2,10 @@ import React, { useState } from 'react'
 import { FcGoogle } from 'react-icons/fc';
 import { FaGithub } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
-import { authAPI } from '../../utils/api';
+import { useAuth } from '../../context/AuthContext';
 
 const SignIn = () => {
+    const { login } = useAuth();
     const navigate = useNavigate();
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -19,27 +20,25 @@ const SignIn = () => {
         setLoading(true);
 
         try {
-            const response = await authAPI.login({
+            const response = await login({
                 email: formData.email,
                 password: formData.password
             });
-            if (response.ok) {
-                localStorage.setItem('token', response.token);
-                localStorage.setItem('user', JSON.stringify(response.user));
+            if (response.success) {
                 navigate('/dashboard');
             } else {
-                setError(response.message ?? 'Login failed. Please try again.')
+                setError(response.error ?? 'Login failed. Please try again.')
             }
         } catch (error) {
-            setError('An error occurred. Please try again later');
-            console.log('Sign up error', error);
+            setError(error.message || 'An error occurred. Please try again later');
+            console.log('Sign in error', error);
 
         } finally {
             setLoading(false);
         }
     }
     const handleChange = (e) => {
-         setFormData({
+        setFormData({
             ...formData,
             [e.target.name]: e.target.value
         })
