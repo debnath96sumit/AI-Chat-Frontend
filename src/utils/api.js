@@ -1,3 +1,5 @@
+import { pushToast, TOAST_TYPES } from './toaster';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const getAuthHeaders = () => {
@@ -9,15 +11,46 @@ const getAuthHeaders = () => {
 };
 
 const handleResponse = async (response) => {
-  const data = await response.json();
+  let data = null;
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
 
-  if (!response.ok) {
-    if (response.status === 401) {
+  const parsedStatusCode = Number(data?.statusCode);
+  const statusCode = Number.isFinite(parsedStatusCode) ? parsedStatusCode : response.status;
+  const isSuccess = statusCode >= 200 && statusCode < 300;
+
+  const getFallbackMessage = () => {
+    if (isSuccess) return 'Request completed successfully';
+    if (statusCode >= 500) return 'Something went wrong on the server';
+    if (statusCode === 401) return 'Unauthorized request';
+    if (statusCode === 403) return 'Access denied';
+    if (statusCode === 404) return 'Requested resource was not found';
+    return 'Request failed';
+  };
+
+  const getToastType = () => {
+    if (isSuccess) return TOAST_TYPES.success;
+    if (statusCode >= 400 && statusCode < 500) return TOAST_TYPES.warning;
+    if (statusCode >= 500) return TOAST_TYPES.error;
+    return TOAST_TYPES.info;
+  };
+
+  const message = data?.message || getFallbackMessage();
+  pushToast({ message, type: getToastType() });
+
+  if (!isSuccess || !response.ok) {
+    if (statusCode === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/sign-in';
     }
-    throw new Error(data.message || 'An error occurred');
+    const error = new Error(message);
+    error.status = statusCode;
+    error.data = data;
+    throw error;
   }
 
   return data;
@@ -90,9 +123,7 @@ export const authAPI = {
   },
 };
 
-// ============================================
-// USER API CALLS
-// ============================================
+
 export const userAPI = {
   // Get user profile
   getProfile: async () => {
@@ -124,9 +155,6 @@ export const userAPI = {
   },
 };
 
-// ============================================
-// CHAT API CALLS
-// ============================================
 export const chatAPI = {
   // Send message to AI
   sendMessage: async (message, chatId) => {

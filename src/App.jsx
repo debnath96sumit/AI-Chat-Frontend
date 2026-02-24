@@ -1,5 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 
 import SignUp from './components/auth/SignUp';
 import SignIn from './components/auth/SignIn';
@@ -11,11 +10,13 @@ import Homepage from './components/Homepage';
 import Chat from './components/Chat';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
+import Toaster from './components/Toaster';
 
 function App() {
   return (
     <Router>
       <AuthProvider>
+        <Toaster />
         <Routes>
           <Route path="/" element={<Homepage />} />
           <Route path="/sign-in" element={<SignIn />} />
