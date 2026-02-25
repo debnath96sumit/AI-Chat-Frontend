@@ -8,7 +8,6 @@ import { signInSchema } from '../../utils/validationSchemas';
 const SignIn = () => {
     const { login } = useAuth();
     const navigate = useNavigate();
-    const [error, setError] = useState('');
     const [fieldErrors, setFieldErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
@@ -18,14 +17,12 @@ const SignIn = () => {
     });
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         setFieldErrors({});
 
         const parsed = signInSchema.safeParse(formData);
         if (!parsed.success) {
             const nextFieldErrors = parsed.error.flatten().fieldErrors;
             setFieldErrors(nextFieldErrors);
-            setError(parsed.error.issues[0]?.message ?? 'Please fix the highlighted fields.');
             return;
         }
 
@@ -38,13 +35,9 @@ const SignIn = () => {
             });
             if (response.success) {
                 navigate('/dashboard');
-            } else {
-                setError(response.error ?? 'Login failed. Please try again.')
             }
         } catch (error) {
-            setError(error.message || 'An error occurred. Please try again later');
             console.log('Sign in error', error);
-
         } finally {
             setLoading(false);
         }
@@ -55,12 +48,11 @@ const SignIn = () => {
             ...formData,
             [name]: type === 'checkbox' ? checked : value
         })
-        setError('');
         setFieldErrors((prev) => ({ ...prev, [name]: '' }));
 
     }
-    const handleSocialSignIn = () => {
-        console.log('test');
+    const handleSocialSignIn = (provider) => {
+        console.log(provider);
 
     }
     return (
@@ -74,12 +66,6 @@ const SignIn = () => {
                         Sign in to continue to your account
                     </p>
                 </div>
-
-                {error && (
-                    <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
-                        {error}
-                    </div>
-                )}
 
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
                     <div className="space-y-4">

@@ -103,12 +103,20 @@ export const authAPI = {
     return handleResponse(response);
   },
 
-  // Reset password
-  resetPassword: async (token, newPassword) => {
+  verifyEmail: async (email, code, type = 'forgot_password_verify') => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/verify-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code, type }),
+    });
+    return handleResponse(response);
+  },
+
+  resetPassword: async (email, newPassword) => {
     const response = await fetch(`${API_BASE_URL}/api/v1/auth/reset-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, newPassword }),
+      body: JSON.stringify({ email, newPassword }),
     });
     return handleResponse(response);
   },

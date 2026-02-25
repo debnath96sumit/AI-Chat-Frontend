@@ -17,20 +17,17 @@ const SignUp = () => {
         password: '',
         confirmPassword: ''
     })
-    const [error, setError] = useState('');
     const [fieldErrors, setFieldErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         setFieldErrors({});
 
         const parsed = signUpSchema.safeParse(formData);
         if (!parsed.success) {
             const nextFieldErrors = parsed.error.flatten().fieldErrors;
             setFieldErrors(nextFieldErrors);
-            setError(parsed.error.issues[0]?.message ?? 'Please fix the highlighted fields.');
             return;
         }
 
@@ -45,13 +42,9 @@ const SignUp = () => {
             });
             if (response.success) {
                 navigate('/dashboard');
-            } else {
-                setError(response.message ?? 'Registration failed. Please try again.')
             }
         } catch (error) {
-            setError(error.message || 'An error occurred. Please try again later');
             console.log('Sign up error', error);
-
         } finally {
             setLoading(false);
         }
@@ -62,7 +55,6 @@ const SignUp = () => {
             ...formData,
             [name]: value
         })
-        setError('');
         setFieldErrors((prev) => ({ ...prev, [name]: '' }));
 
     }
@@ -71,13 +63,9 @@ const SignUp = () => {
             const response = await socialLogin('google', idToken);
             if (response.success) {
                 navigate('/dashboard');
-            } else {
-                setError(response.message ?? 'Registration failed. Please try again.')
             }
         } catch (error) {
-            setError(error.message || 'An error occurred. Please try again later');
             console.log('Sign up error', error);
-
         } finally {
             setLoading(false);
         }
@@ -98,12 +86,6 @@ const SignUp = () => {
                         Join us and start your AI journey
                     </p>
                 </div>
-
-                {error && (
-                    <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
-                        {error}
-                    </div>
-                )}
 
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
                     <div className="space-y-4">

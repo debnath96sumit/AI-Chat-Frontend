@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { subscribeToToasts } from '../utils/toaster';
 
 const toastStyles = {
-  success: 'border-emerald-500/60 bg-emerald-500/15 text-emerald-200',
-  info: 'border-sky-500/60 bg-sky-500/15 text-sky-200',
-  warning: 'border-amber-500/60 bg-amber-500/15 text-amber-200',
-  error: 'border-red-500/60 bg-red-500/15 text-red-200',
+  success: 'border-emerald-500/60 bg-emerald-500/15 text-emerald-500',
+  info: 'border-sky-500/60 bg-sky-500/15 text-sky-500',
+  warning: 'border-amber-500/60 bg-amber-500/15 text-amber-500',
+  error: 'border-red-500/60 bg-red-500/15 text-red-500',
 };
 
 function Toaster() {
