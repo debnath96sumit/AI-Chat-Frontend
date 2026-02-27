@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { FaArrowLeft, FaShieldAlt } from 'react-icons/fa';
+import { authAPI } from '../../utils/api';
 
 const VerifyOTP = () => {
   const navigate = useNavigate();
@@ -9,7 +10,6 @@ const VerifyOTP = () => {
 
   const [otp, setOtp] = useState(['', '', '', '']);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [timer, setTimer] = useState(60);
@@ -59,12 +59,12 @@ const VerifyOTP = () => {
   const handlePaste = (e) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text').slice(0, 4);
-    
+
     if (!/^\d+$/.test(pastedData)) return;
 
     const newOtp = pastedData.split('');
     setOtp([...newOtp, ...Array(4 - newOtp.length).fill('')]);
-    
+
     // Focus last filled input or next empty
     const nextIndex = Math.min(pastedData.length, 3);
     inputRefs.current[nextIndex]?.focus();
@@ -84,32 +84,21 @@ const VerifyOTP = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/v1/auth/verify-otp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          otp: otpCode
-        }),
+      const response = await authAPI.verifyOTP({
+        email: email,
+        code: otpCode,
+        type: 'forgot_password_verify'
       });
+      console.log('Forgot password response', response);
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setSuccess(true);
-        // Navigate to reset password with verification token
-        setTimeout(() => {
-          navigate('/reset-password', {
-            state: {
-              email,
-              verificationToken: data.verificationToken || otpCode
-            }
-          });
-        }, 1000);
+      if (response.statusCode === 200) {
+        navigate('/reset-password', {
+          state: {
+            email
+          }
+        });
       } else {
-        setError(data.message || 'Invalid or expired code. Please try again.');
+        setError(response.message || 'Invalid or expired code. Please try again.');
       }
     } catch (err) {
       setError('An error occurred. Please try again later.');
@@ -126,15 +115,11 @@ const VerifyOTP = () => {
     setError('');
 
     try {
-      const response = await fetch('/api/v1/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
+      const response = await authAPI.forgotPassword({
+        email: email
       });
 
-      if (response.ok) {
+      if (response.statusCode === 200) {
         setTimer(60); // Reset timer
         setOtp(['', '', '', '']); // Clear OTP inputs
         inputRefs.current[0]?.focus(); // Focus first input
@@ -157,14 +142,14 @@ const VerifyOTP = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 px-4 py-12">
       <div className="max-w-md w-full space-y-8 bg-slate-800/50 backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-slate-700">
         <div>
-          <Link 
-            to="/forgot-password" 
+          <Link
+            to="/forgot-password"
             className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition mb-4"
           >
             <FaArrowLeft />
             Back
           </Link>
-          
+
           <div className="flex justify-center mb-4">
             <div className="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center">
               <FaShieldAlt className="text-3xl text-purple-400" />
@@ -188,11 +173,6 @@ const VerifyOTP = () => {
           </div>
         )}
 
-        {success && (
-          <div className="bg-green-500/10 border border-green-500/50 text-green-400 px-4 py-3 rounded-lg text-sm">
-            Code verified successfully! Redirecting...
-          </div>
-        )}
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {/* OTP Input Boxes */}
@@ -212,7 +192,7 @@ const VerifyOTP = () => {
                   onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={index === 0 ? handlePaste : undefined}
-                  disabled={loading || success}
+                  disabled={loading}
                   className="w-14 h-14 text-center text-2xl font-bold border-2 border-slate-600 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition disabled:opacity-50 disabled:cursor-not-allowed"
                   autoFocus={index === 0}
                 />
@@ -223,10 +203,10 @@ const VerifyOTP = () => {
           <div>
             <button
               type="submit"
-              disabled={loading || success}
+              disabled={loading}
               className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Verifying...' : success ? 'Verified!' : 'Verify Code'}
+              {loading ? 'Verifying...' : 'Verify Code'}
             </button>
           </div>
 

@@ -11,6 +11,7 @@ import Chat from './components/Chat';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import Toaster from './components/Toaster';
+import VerifyOTP from './components/auth/VerifyOTP';
 
 function App() {
   return (
@@ -22,8 +23,8 @@ function App() {
           <Route path="/sign-in" element={<SignIn />} />
           <Route path="/sign-up" element={<SignUp />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-otp" element={<VerifyOTP />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/change-password" element={<ChangePassword />} />
           <Route
             path="/dashboard"
             element={

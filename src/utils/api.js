@@ -94,7 +94,7 @@ export const authAPI = {
   },
 
   // Forgot password
-  forgotPassword: async (email) => {
+  forgotPassword: async ({ email }) => {
     const response = await fetch(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -103,7 +103,7 @@ export const authAPI = {
     return handleResponse(response);
   },
 
-  verifyEmail: async (email, code, type = 'forgot_password_verify') => {
+  verifyOTP: async ({ email, code, type = 'forgot_password_verify' }) => {
     const response = await fetch(`${API_BASE_URL}/api/v1/auth/verify-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -112,7 +112,7 @@ export const authAPI = {
     return handleResponse(response);
   },
 
-  resetPassword: async (email, newPassword) => {
+  resetPassword: async ({ email, newPassword }) => {
     const response = await fetch(`${API_BASE_URL}/api/v1/auth/reset-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
