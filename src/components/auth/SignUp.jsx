@@ -41,7 +41,7 @@ const SignUp = () => {
                 password: parsed.data.password
             });
             if (response.success) {
-                navigate('/dashboard');
+                navigate('/new');
             }
         } catch (error) {
             console.log('Sign up error', error);
@@ -62,7 +62,7 @@ const SignUp = () => {
         try {
             const response = await socialLogin('google', idToken);
             if (response.success) {
-                navigate('/dashboard');
+                navigate('/new');
             }
         } catch (error) {
             console.log('Sign up error', error);

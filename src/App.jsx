@@ -26,7 +26,7 @@ function App() {
           <Route path="/verify-otp" element={<VerifyOTP />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route
-            path="/dashboard"
+            path="/new"
             element={
               <ProtectedRoute>
                 <Chat />

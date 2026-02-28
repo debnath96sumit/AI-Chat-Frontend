@@ -153,7 +153,7 @@ export const userAPI = {
   },
 
   // Change password
-  changePassword: async (currentPassword, newPassword) => {
+  changePassword: async ({ currentPassword, newPassword }) => {
     const response = await fetch(`${API_BASE_URL}/api/v1/user/change-password`, {
       method: 'POST',
       headers: getAuthHeaders(),

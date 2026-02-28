@@ -1,7 +1,55 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { FaArrowLeft, FaCheckCircle } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
+import { userAPI } from '../../utils/api';
+import { changePasswordSchema } from '../../utils/validationSchemas';
 
 const ChangePassword = () => {
+    const { error, setError } = useState('');
+    const { success, setSuccess } = useState('');
+    const [fieldErrors, setFieldErrors] = useState({});
+    const [loading, setLoading] = useState(false);
+
+    const [formData, setFormData] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
+    const handleSubmit = async (e) => {
+        console.log(e);
+        e.preventDefault();
+        setFieldErrors({});
+
+        const parsed = changePasswordSchema.safeParse(formData);
+        if (!parsed.success) {
+            const nextFieldErrors = parsed.error.flatten().fieldErrors;
+            setFieldErrors(nextFieldErrors);
+            return;
+        }
+        setLoading(true);
+        try {
+            const response = await userAPI.changePassword({
+                currentPassword: parsed.data.currentPassword,
+                newPassword: parsed.data.newPassword
+            });
+            if (response.success) {
+                navigate('/new');
+            }
+        } catch (error) {
+            console.log('Sign in error', error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({
+            ...formData,
+            [name]: value
+        })
+        setFieldErrors((prev) => ({ ...prev, [name]: '' }))
+    }
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 px-4 py-12">
             <div className="max-w-md mx-auto">
@@ -55,6 +103,9 @@ const ChangePassword = () => {
                                 className="appearance-none relative block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                                 placeholder="Enter current password"
                             />
+                            {fieldErrors.currentPassword?.[0] && (
+                                <p className="mt-1 text-sm text-red-400">{fieldErrors.currentPassword[0]}</p>
+                            )}
                         </div>
 
                         <div className="pt-4 border-t border-slate-700">
@@ -72,6 +123,9 @@ const ChangePassword = () => {
                                     className="appearance-none relative block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                                     placeholder="Min. 8 characters"
                                 />
+                                {fieldErrors.newPassword?.[0] && (
+                                    <p className="mt-1 text-sm text-red-400">{fieldErrors.newPassword[0]}</p>
+                                )}
                             </div>
 
                             <div>
@@ -88,6 +142,9 @@ const ChangePassword = () => {
                                     className="appearance-none relative block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                                     placeholder="Re-enter new password"
                                 />
+                                {fieldErrors.confirmPassword?.[0] && (
+                                    <p className="mt-1 text-sm text-red-400">{fieldErrors.confirmPassword[0]}</p>
+                                )}
                             </div>
                         </div>
 

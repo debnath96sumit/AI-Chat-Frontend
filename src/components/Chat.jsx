@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, User, Bot, Copy, ThumbsUp, ThumbsDown, Menu, Square } from 'lucide-react';
 import Sidebar from './Sidebar.jsx';
-
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import ConfirmModal from './ConfirmModal.jsx';
 const ChatBot = () => {
   const [messages, setMessages] = useState([
     {
@@ -14,6 +16,9 @@ const ChatBot = () => {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const eventSourceRef = useRef(null);
@@ -26,12 +31,27 @@ const ChatBot = () => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') {
+        setLogoutModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, []);
+
   const stopStream = () => {
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
       eventSourceRef.current = null;
       setIsTyping(false);
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   const handleSendMessage = () => {
@@ -136,7 +156,11 @@ const ChatBot = () => {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <Sidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        openLogoutModal={() => setLogoutModalOpen(true)}
+      />
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
@@ -159,8 +183,8 @@ const ChatBot = () => {
               <div key={message.id} className={`flex gap-4 ${message.isBot || message.sender === 'ai' ? '' : 'flex-row-reverse'}`}>
                 {/* Avatar */}
                 <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${message.isBot || message.sender === 'ai'
-                    ? 'bg-green-100 text-green-600'
-                    : 'bg-blue-100 text-blue-600'
+                  ? 'bg-green-100 text-green-600'
+                  : 'bg-blue-100 text-blue-600'
                   }`}>
                   {message.isBot || message.sender === 'ai' ? <Bot size={16} /> : <User size={16} />}
                 </div>
@@ -168,8 +192,8 @@ const ChatBot = () => {
                 {/* Message Content */}
                 <div className={`flex-1 max-w-2xl ${message.isBot || message.sender === 'ai' ? '' : 'flex flex-col items-end'}`}>
                   <div className={`px-4 py-3 rounded-2xl ${message.isBot || message.sender === 'ai'
-                      ? 'bg-white border border-gray-200 text-gray-900'
-                      : 'bg-blue-600 text-white'
+                    ? 'bg-white border border-gray-200 text-gray-900'
+                    : 'bg-blue-600 text-white'
                     }`}>
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
                   </div>
@@ -257,6 +281,13 @@ const ChatBot = () => {
           onClick={() => setSidebarOpen(false)}
         />
       )}
+      <ConfirmModal
+        isOpen={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
+        onConfirm={handleLogout}
+        title="Confirm Logout"
+        message="Are you sure you want to logout from your account?"
+      />
     </div>
   );
 };

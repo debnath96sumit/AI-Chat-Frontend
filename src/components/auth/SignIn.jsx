@@ -34,7 +34,7 @@ const SignIn = () => {
                 password: parsed.data.password
             });
             if (response.success) {
-                navigate('/dashboard');
+                navigate('/new');
             }
         } catch (error) {
             console.log('Sign in error', error);
