@@ -1,12 +1,11 @@
-import React, { useState } from 'react'
-import { FaArrowLeft, FaCheckCircle } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { FaCheckCircle } from 'react-icons/fa';
 import { userAPI } from '../../utils/api';
 import { changePasswordSchema } from '../../utils/validationSchemas';
 
-const ChangePassword = () => {
-    const { error, setError } = useState('');
-    const { success, setSuccess } = useState('');
+const ChangePassword = ({ onClose }) => {
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
     const [fieldErrors, setFieldErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
@@ -15,162 +14,151 @@ const ChangePassword = () => {
         newPassword: '',
         confirmPassword: ''
     });
+
     const handleSubmit = async (e) => {
-        console.log(e);
         e.preventDefault();
         setFieldErrors({});
+        setError('');
 
         const parsed = changePasswordSchema.safeParse(formData);
+
         if (!parsed.success) {
             const nextFieldErrors = parsed.error.flatten().fieldErrors;
             setFieldErrors(nextFieldErrors);
             return;
         }
+
         setLoading(true);
+
         try {
             const response = await userAPI.changePassword({
-                currentPassword: parsed.data.currentPassword,
+                oldPassword: parsed.data.currentPassword,
                 newPassword: parsed.data.newPassword
             });
+
             if (response.success) {
-                navigate('/new');
+                setSuccess(true);
+
+                // Auto close modal after 1.5s
+                setTimeout(() => {
+                    onClose?.();
+                }, 1500);
             }
-        } catch (error) {
-            console.log('Sign in error', error);
+        } catch (err) {
+            setError(err?.response?.data?.message || 'Something went wrong');
         } finally {
             setLoading(false);
         }
-    }
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData({
-            ...formData,
+
+        setFormData(prev => ({
+            ...prev,
             [name]: value
-        })
-        setFieldErrors((prev) => ({ ...prev, [name]: '' }))
-    }
+        }));
+
+        setFieldErrors(prev => ({ ...prev, [name]: '' }));
+    };
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 px-4 py-12">
-            <div className="max-w-md mx-auto">
-                <div className="bg-slate-800/50 backdrop-blur-lg rounded-2xl shadow-2xl border border-slate-700 p-8">
-                    <div className="mb-6">
-                        <Link
-                            to="/profile"
-                            className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition mb-4"
-                        >
-                            <FaArrowLeft />
-                            Back to profile
-                        </Link>
-                        <h2 className="text-2xl font-bold text-white">Change Password</h2>
-                        <p className="mt-2 text-sm text-gray-400">
-                            Update your password to keep your account secure
-                        </p>
-                    </div>
+        <div className="w-full max-w-md">
+            <div className="bg-slate-800 rounded-2xl shadow-xl border border-slate-700 p-6">
 
-                    {error && (
-                        <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm mb-6">
-                            {error}
-                        </div>
-                    )}
-
-                    {success && (
-                        <div className="bg-green-500/10 border border-green-500/50 text-green-400 px-4 py-3 rounded-lg mb-6">
-                            <div className="flex items-start gap-3">
-                                <FaCheckCircle className="text-xl flex-shrink-0 mt-0.5" />
-                                <div>
-                                    <p className="font-medium mb-1">Password changed successfully!</p>
-                                    <p className="text-sm text-green-300">
-                                        Redirecting you back to profile...
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-300 mb-2">
-                                Current Password
-                            </label>
-                            <input
-                                id="currentPassword"
-                                name="currentPassword"
-                                type="password"
-                                required
-                                value={formData.currentPassword}
-                                onChange={handleChange}
-                                className="appearance-none relative block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-                                placeholder="Enter current password"
-                            />
-                            {fieldErrors.currentPassword?.[0] && (
-                                <p className="mt-1 text-sm text-red-400">{fieldErrors.currentPassword[0]}</p>
-                            )}
-                        </div>
-
-                        <div className="pt-4 border-t border-slate-700">
-                            <div className="mb-4">
-                                <label htmlFor="newPassword" className="block text-sm font-medium text-gray-300 mb-2">
-                                    New Password
-                                </label>
-                                <input
-                                    id="newPassword"
-                                    name="newPassword"
-                                    type="password"
-                                    required
-                                    value={formData.newPassword}
-                                    onChange={handleChange}
-                                    className="appearance-none relative block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-                                    placeholder="Min. 8 characters"
-                                />
-                                {fieldErrors.newPassword?.[0] && (
-                                    <p className="mt-1 text-sm text-red-400">{fieldErrors.newPassword[0]}</p>
-                                )}
-                            </div>
-
-                            <div>
-                                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
-                                    Confirm New Password
-                                </label>
-                                <input
-                                    id="confirmPassword"
-                                    name="confirmPassword"
-                                    type="password"
-                                    required
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                    className="appearance-none relative block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-                                    placeholder="Re-enter new password"
-                                />
-                                {fieldErrors.confirmPassword?.[0] && (
-                                    <p className="mt-1 text-sm text-red-400">{fieldErrors.confirmPassword[0]}</p>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="pt-4">
-                            <button
-                                type="submit"
-                                disabled={loading || success}
-                                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {loading ? 'Changing password...' : 'Change Password'}
-                            </button>
-                        </div>
-                    </form>
-
-                    <div className="mt-6 p-4 bg-slate-700/30 rounded-lg border border-slate-600">
-                        <h3 className="text-sm font-medium text-white mb-2">Password Requirements:</h3>
-                        <ul className="text-xs text-gray-400 space-y-1">
-                            <li>• At least 8 characters long</li>
-                            <li>• Different from your current password</li>
-                            <li>• Use a combination of letters, numbers, and symbols</li>
-                        </ul>
-                    </div>
+                <div className="mb-6">
+                    <h2 className="text-xl font-bold text-white">
+                        Change Password
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-400">
+                        Update your password to keep your account secure
+                    </p>
                 </div>
+
+                {error && (
+                    <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm mb-4">
+                        {error}
+                    </div>
+                )}
+
+                {success && (
+                    <div className="bg-green-500/10 border border-green-500/50 text-green-400 px-4 py-3 rounded-lg mb-4">
+                        <div className="flex items-center gap-3">
+                            <FaCheckCircle />
+                            <span>Password changed successfully!</span>
+                        </div>
+                    </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-5">
+                    {/* Current Password */}
+                    <div>
+                        <label className="block text-sm text-gray-300 mb-1">
+                            Current Password
+                        </label>
+                        <input
+                            type="password"
+                            name="currentPassword"
+                            value={formData.currentPassword}
+                            onChange={handleChange}
+                            className="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                        />
+                        {fieldErrors.currentPassword?.[0] && (
+                            <p className="text-sm text-red-400 mt-1">
+                                {fieldErrors.currentPassword[0]}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* New Password */}
+                    <div>
+                        <label className="block text-sm text-gray-300 mb-1">
+                            New Password
+                        </label>
+                        <input
+                            type="password"
+                            name="newPassword"
+                            value={formData.newPassword}
+                            onChange={handleChange}
+                            className="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                        />
+                        {fieldErrors.newPassword?.[0] && (
+                            <p className="text-sm text-red-400 mt-1">
+                                {fieldErrors.newPassword[0]}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Confirm Password */}
+                    <div>
+                        <label className="block text-sm text-gray-300 mb-1">
+                            Confirm Password
+                        </label>
+                        <input
+                            type="password"
+                            name="confirmPassword"
+                            value={formData.confirmPassword}
+                            onChange={handleChange}
+                            className="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                        />
+                        {fieldErrors.confirmPassword?.[0] && (
+                            <p className="text-sm text-red-400 mt-1">
+                                {fieldErrors.confirmPassword[0]}
+                            </p>
+                        )}
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={loading || success}
+                        className="w-full py-2 rounded-lg text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:opacity-90 disabled:opacity-50"
+                    >
+                        {loading ? 'Changing...' : 'Change Password'}
+                    </button>
+                </form>
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default ChangePassword
+export default ChangePassword;

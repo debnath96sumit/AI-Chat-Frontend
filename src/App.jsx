@@ -4,8 +4,6 @@ import SignUp from './components/auth/SignUp';
 import SignIn from './components/auth/SignIn';
 import ForgotPassword from './components/auth/ForgotPassword';
 import ResetPassword from './components/auth/ResetPassword';
-import UserProfile from './components/auth/UserProfile';
-import ChangePassword from './components/auth/ChangePassword';
 import Homepage from './components/Homepage';
 import Chat from './components/Chat';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -30,22 +28,6 @@ function App() {
             element={
               <ProtectedRoute>
                 <Chat />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <UserProfile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/change-password"
-            element={
-              <ProtectedRoute>
-                <ChangePassword />
               </ProtectedRoute>
             }
           />

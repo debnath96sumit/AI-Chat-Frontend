@@ -3,7 +3,12 @@ import { useEffect, useState } from 'react';
 import { chatAPI } from '../utils/api';
 import { Link } from 'react-router-dom';
 
-const Sidebar = ({ sidebarOpen, setSidebarOpen, openLogoutModal }) => {
+const Sidebar = ({
+  sidebarOpen,
+  setSidebarOpen,
+  openLogoutModal,
+  openModal
+}) => {
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [chats, setChats] = useState([]);
 
@@ -66,6 +71,21 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, openLogoutModal }) => {
         </div>
         {showSettingsMenu && (
           <div className="absolute bottom-16 left-4 right-4 bg-gray-800 border border-gray-700 rounded-lg shadow-lg">
+            <button
+              onClick={() => {
+                openModal('profile')
+                setShowSettingsMenu(false);
+              }}
+              className="w-full text-left px-4 py-2 hover:bg-gray-700 text-sm" > Profile
+            </button>
+            <button
+              onClick={() => {
+                openModal('password-change')
+                setShowSettingsMenu(false);
+              }}
+              className="w-full text-left px-4 py-2 hover:bg-gray-700 text-sm" >
+              Password
+            </button>
             <button
               onClick={() => {
                 openLogoutModal()

@@ -4,6 +4,9 @@ import Sidebar from './Sidebar.jsx';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import ConfirmModal from './ConfirmModal.jsx';
+import Modal from './Modal.jsx';
+import UserProfile from './auth/UserProfile.jsx';
+import ChangePassword from './auth/ChangePassword.jsx';
 const ChatBot = () => {
   const [messages, setMessages] = useState([
     {
@@ -17,12 +20,18 @@ const ChatBot = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+  const [activeSettingsTab, setActiveSettingsTab] = useState(null);
   const { logout } = useAuth();
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const eventSourceRef = useRef(null);
 
+  const openSettingsModal = (tab) => {
+    setActiveSettingsTab(tab);
+    setSettingsModalOpen(true);
+  };
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -160,6 +169,7 @@ const ChatBot = () => {
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         openLogoutModal={() => setLogoutModalOpen(true)}
+        openModal={openSettingsModal}
       />
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
@@ -288,6 +298,30 @@ const ChatBot = () => {
         title="Confirm Logout"
         message="Are you sure you want to logout from your account?"
       />
+      <Modal
+        isOpen={settingsModalOpen}
+        onClose={() => {
+          setSettingsModalOpen(false);
+          setActiveSettingsTab(null);
+        }}
+      >
+        {activeSettingsTab === 'profile' && (
+          <UserProfile
+            onClose={() => {
+              setSettingsModalOpen(false);
+              setActiveSettingsTab(null);
+            }}
+          />
+        )}
+        {activeSettingsTab === 'password-change' && (
+          <ChangePassword
+            onClose={() => {
+              setSettingsModalOpen(false);
+              setActiveSettingsTab(null);
+            }}
+          />
+        )}
+      </Modal>
     </div>
   );
 };
