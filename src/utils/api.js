@@ -192,9 +192,9 @@ export const chatAPI = {
     return handleResponse(response);
   },
 
-  // Get chat details with messages
-  getChatDetails: async (chatId) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/chat/${chatId}`, {
+  // Get chat details with messages also this api is going to accept limit and page a query param
+  getChatDetails: async (chatId, page = 1, limit = 10) => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/chat/${chatId}?limit=${limit}&page=${page}`, {
       method: 'GET',
       headers: getAuthHeaders(),
     });

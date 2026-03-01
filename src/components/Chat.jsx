@@ -1,28 +1,29 @@
 import { useState, useRef, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Send, User, Bot, Copy, ThumbsUp, ThumbsDown, Menu, Square } from 'lucide-react';
-import Sidebar from './Sidebar.jsx';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { chatAPI } from '../utils/api';
+import Sidebar from './Sidebar.jsx';
 import ConfirmModal from './ConfirmModal.jsx';
 import Modal from './Modal.jsx';
+import Loading from './Loading.jsx';
 import UserProfile from './auth/UserProfile.jsx';
 import ChangePassword from './auth/ChangePassword.jsx';
+
 const ChatBot = () => {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      text: "Hello! I'm your AI assistant. How can I help you today?",
-      isBot: true,
-      timestamp: new Date()
-    }
-  ]);
+  const { chatId } = useParams();
+
+  const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [currentChatId, setCurrentChatId] = useState(chatId || null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [activeSettingsTab, setActiveSettingsTab] = useState(null);
-  const { logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -50,6 +51,61 @@ const ChatBot = () => {
     return () => window.removeEventListener('keydown', handleEsc);
   }, []);
 
+  // Load chat history when chatId changes
+  useEffect(() => {
+    if (chatId) {
+      loadChatHistory(chatId);
+      setCurrentChatId(chatId);
+    } else {
+      // New chat - show welcome message
+      setMessages([
+        {
+          id: 1,
+          text: "Hello! I'm your AI assistant. How can I help you today?",
+          isBot: true,
+          sender: 'ai',
+          timestamp: new Date()
+        }
+      ]);
+      setCurrentChatId(null);
+    }
+  }, [chatId]);
+
+  // Load chat history from backend
+  const loadChatHistory = async (chatId, page = 1, limit = 50) => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const data = await chatAPI.getChatDetails(chatId, page, limit);
+      console.log('data', data, data.data);
+      // Transform backend messages to frontend format
+      const transformedMessages = data.data.messages?.docs?.map(msg => ({
+        id: msg.id || msg._id,
+        text: msg.content || msg.message,
+        isBot: msg.role === 'assistant' || msg.sender === 'ai',
+        sender: msg.role === 'assistant' ? 'ai' : 'user',
+        timestamp: new Date(msg.createdAt || msg.timestamp)
+      }));
+
+      setMessages(transformedMessages);
+    } catch (err) {
+      console.error('Error loading chat history:', err);
+      setError('Failed to load chat history');
+      setMessages([
+        {
+          id: 1,
+          text: "Sorry, I couldn't load the chat history. Let's start fresh!",
+          isBot: true,
+          sender: 'ai',
+          timestamp: new Date()
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const stopStream = () => {
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
@@ -63,10 +119,9 @@ const ChatBot = () => {
     navigate('/login');
   };
 
-  const handleSendMessage = () => {
-    if (!inputText.trim()) return;
+  const handleSendMessage = async () => {
+    if (!inputText.trim() || isTyping) return;
 
-    // Add user message with new format
     const userMessage = {
       id: Date.now(),
       text: inputText,
@@ -76,17 +131,57 @@ const ChatBot = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
-    const currentInput = inputText; // Store current input
+
+    const currentInput = inputText;
     setInputText('');
     setIsTyping(true);
+    setError('');
 
-    // Start streaming from your backend
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
-    const eventSource = new EventSource(`${backendUrl}/chat/stream/${encodeURIComponent(currentInput)}`);
-    eventSourceRef.current = eventSource; // Store reference
+    try {
+      // 1️⃣ POST message (NEW API)
+      const response = await chatAPI.sendMessage(currentInput, currentChatId);
+      console.log('rrrrrrrr', response);
+
+      const newChatId = response.chatId;
+
+      // If new chat → update URL
+      if (!currentChatId && newChatId) {
+        setCurrentChatId(newChatId);
+        navigate(`/chat/${newChatId}`, { replace: true });
+      }
+
+      // 2️⃣ Start streaming
+      handleStreamingResponse(newChatId);
+
+    } catch (err) {
+      console.error('Error sending message:', err);
+      setError('Failed to send message. Please try again.');
+      setIsTyping(false);
+
+      setMessages(prev => [...prev, {
+        id: Date.now() + 1,
+        sender: 'ai',
+        text: "Sorry, I'm having trouble responding right now. Please try again.",
+        isBot: true,
+        timestamp: new Date()
+      }]);
+    }
+  };
+
+  const handleStreamingResponse = (chatId) => {
+    const backendUrl =
+      import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+
+    const eventSource = new EventSource(
+      `${backendUrl}/api/v1/chat/stream/${chatId}?token=${token}`
+    );
+
+    eventSourceRef.current = eventSource;
+
     let aiText = '';
 
     eventSource.onmessage = (event) => {
+
       if (event.data === '__END__') {
         setIsTyping(false);
         eventSource.close();
@@ -98,48 +193,35 @@ const ChatBot = () => {
 
       setMessages((prev) => {
         const last = prev[prev.length - 1];
+
         if (last?.sender === 'ai') {
-          return [...prev.slice(0, -1), {
-            id: last.id,
-            sender: 'ai',
-            text: aiText,
-            isBot: true,
-            timestamp: last.timestamp
-          }];
+          return [
+            ...prev.slice(0, -1),
+            {
+              ...last,
+              text: aiText
+            }
+          ];
         } else {
-          return [...prev, {
-            id: Date.now() + 1,
-            sender: 'ai',
-            text: aiText,
-            isBot: true,
-            timestamp: new Date()
-          }];
+          return [
+            ...prev,
+            {
+              id: Date.now(),
+              sender: 'ai',
+              text: aiText,
+              isBot: true,
+              timestamp: new Date()
+            }
+          ];
         }
       });
     };
 
-    eventSource.onclose = () => {
-      setIsTyping(false);
-      eventSourceRef.current = null;
-    };
-
     eventSource.onerror = (err) => {
       console.error('SSE error:', err);
-      if (eventSource.readyState === EventSource.CLOSED || aiText.length > 0) {
-        return;
-      }
-
       setIsTyping(false);
       eventSource.close();
       eventSourceRef.current = null;
-
-      setMessages(prev => [...prev, {
-        id: Date.now() + 2,
-        sender: 'ai',
-        text: "Sorry, I'm having trouble connecting. Please try again.",
-        isBot: true,
-        timestamp: new Date()
-      }]);
     };
   };
 
@@ -163,6 +245,12 @@ const ChatBot = () => {
     };
   }, []);
 
+  if (loading) {
+    return (
+      <Loading />
+    );
+  }
+
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar
@@ -182,35 +270,66 @@ const ChatBot = () => {
             >
               <Menu size={20} />
             </button>
-            <h1 className="text-lg font-medium text-gray-900">AI Assistant</h1>
+            <h1 className="text-lg font-medium text-gray-900">
+              {currentChatId ? 'Chat' : 'New Chat'}
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">
+              {user?.username || 'User'}
+            </span>
           </div>
         </div>
+
+        {/* Error Banner */}
+        {error && (
+          <div className="bg-red-50 border-b border-red-200 px-4 py-3">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
 
         {/* Messages Container */}
         <div className="flex-1 overflow-y-auto px-4 py-6">
           <div className="max-w-3xl mx-auto space-y-6">
             {messages.map((message) => (
-              <div key={message.id} className={`flex gap-4 ${message.isBot || message.sender === 'ai' ? '' : 'flex-row-reverse'}`}>
+              <div
+                key={message.id}
+                className={`flex gap-4 ${message.isBot || message.sender === 'ai' ? '' : 'flex-row-reverse'
+                  }`}
+              >
                 {/* Avatar */}
-                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${message.isBot || message.sender === 'ai'
-                  ? 'bg-green-100 text-green-600'
-                  : 'bg-blue-100 text-blue-600'
-                  }`}>
-                  {message.isBot || message.sender === 'ai' ? <Bot size={16} /> : <User size={16} />}
+                <div
+                  className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${message.isBot || message.sender === 'ai'
+                    ? 'bg-green-100 text-green-600'
+                    : 'bg-blue-100 text-blue-600'
+                    }`}
+                >
+                  {message.isBot || message.sender === 'ai' ? (
+                    <Bot size={16} />
+                  ) : (
+                    <User size={16} />
+                  )}
                 </div>
 
                 {/* Message Content */}
-                <div className={`flex-1 max-w-2xl ${message.isBot || message.sender === 'ai' ? '' : 'flex flex-col items-end'}`}>
-                  <div className={`px-4 py-3 rounded-2xl ${message.isBot || message.sender === 'ai'
-                    ? 'bg-white border border-gray-200 text-gray-900'
-                    : 'bg-blue-600 text-white'
-                    }`}>
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
+                <div
+                  className={`flex-1 max-w-2xl ${message.isBot || message.sender === 'ai' ? '' : 'flex flex-col items-end'
+                    }`}
+                >
+                  <div
+                    className={`px-4 py-3 rounded-2xl ${message.isBot || message.sender === 'ai'
+                      ? 'bg-white border border-gray-200 text-gray-900'
+                      : 'bg-blue-600 text-white'
+                      }`}
+                  >
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                      {message.text}
+                    </p>
                   </div>
 
                   {/* Message Actions (only for bot messages) */}
                   {(message.isBot || message.sender === 'ai') && (
-                    <div className="flex items-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1 mt-2">
                       <button
                         onClick={() => copyMessage(message.text)}
                         className="p-1 rounded hover:bg-gray-100"
@@ -218,21 +337,49 @@ const ChatBot = () => {
                       >
                         <Copy size={14} className="text-gray-400" />
                       </button>
-                      <button className="p-1 rounded hover:bg-gray-100" title="Good response">
+                      <button
+                        className="p-1 rounded hover:bg-gray-100"
+                        title="Good response"
+                      >
                         <ThumbsUp size={14} className="text-gray-400" />
                       </button>
-                      <button className="p-1 rounded hover:bg-gray-100" title="Bad response">
+                      <button
+                        className="p-1 rounded hover:bg-gray-100"
+                        title="Bad response"
+                      >
                         <ThumbsDown size={14} className="text-gray-400" />
                       </button>
                     </div>
                   )}
 
                   <div className="text-xs text-gray-400 mt-1">
-                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {message.timestamp.toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
                   </div>
                 </div>
               </div>
             ))}
+
+            {/* Typing Indicator */}
+            {isTyping && (
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-green-100 text-green-600">
+                  <Bot size={16} />
+                </div>
+                <div className="flex-1 max-w-2xl">
+                  <div className="px-4 py-3 rounded-2xl bg-white border border-gray-200">
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </div>
         </div>
@@ -257,7 +404,7 @@ const ChatBot = () => {
                   e.target.style.height = 'auto';
                   e.target.style.height = Math.min(e.target.scrollHeight, 128) + 'px';
                 }}
-                disabled={isTyping} // Disable input while streaming
+                disabled={isTyping}
               />
               {isTyping ? (
                 <button
