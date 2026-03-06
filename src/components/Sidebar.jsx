@@ -1,7 +1,7 @@
 import { MoreHorizontal, Plus, Settings, MessageSquare } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { chatAPI } from '../utils/api';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Sidebar = ({
   sidebarOpen,
@@ -11,7 +11,7 @@ const Sidebar = ({
 }) => {
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [chats, setChats] = useState([]);
-
+  const navigate = useNavigate();
   useEffect(() => {
     const loadChats = async () => {
       try {
@@ -24,7 +24,9 @@ const Sidebar = ({
 
     loadChats();
   }, []);
-
+  const handleChatOpen = (chatId) => {
+    navigate(`/chat/${chatId}`);
+  }
   return (
     <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-80 bg-gray-900 text-white transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0`}>
       <div className="flex flex-col h-full">
@@ -49,9 +51,10 @@ const Sidebar = ({
           <div className="space-y-2">
             {chats.map((chat) => (
               <div
-                key={chat.id}
+                key={chat._id}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer group hover:bg-gray-800 ${chat.active ? 'bg-gray-800' : ''
                   }`}
+                onClick={() => handleChatOpen(chat._id)}
               >
                 <MessageSquare size={16} className="text-gray-400" />
                 <span className="flex-1 text-sm truncate">{chat.title}</span>

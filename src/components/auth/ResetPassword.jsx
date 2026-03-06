@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { FaCheckCircle } from 'react-icons/fa';
+import { FaCheckCircle, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { resetPasswordSchema } from '../../utils/validationSchemas';
 import { authAPI } from '../../utils/api';
@@ -10,6 +10,8 @@ const ResetPassword = () => {
     const [fieldErrors, setFieldErrors] = useState({});
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [formData, setFormData] = useState({
         newPassword: '',
         confirmNewPassword: ''
@@ -88,16 +90,25 @@ const ResetPassword = () => {
                             <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
                                 New Password
                             </label>
-                            <input
-                                id="newPassword"
-                                name="newPassword"
-                                type="password"
-                                required
-                                value={formData.newPassword}
-                                onChange={handleChange}
-                                className="appearance-none relative block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-                                placeholder="Min. 8 characters"
-                            />
+                            <div className="relative">
+                                <input
+                                    id="newPassword"
+                                    name="newPassword"
+                                    type="password"
+                                    required
+                                    value={formData.newPassword}
+                                    onChange={handleChange}
+                                    className="appearance-none relative block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                                    placeholder="Min. 8 characters"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-300 transition"
+                                >
+                                    {showNewPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+                                </button>
+                            </div>
                             {fieldErrors.newPassword?.[0] && (
                                 <p className="mt-1 text-sm text-red-400">{fieldErrors.newPassword[0]}</p>
                             )}
@@ -107,16 +118,25 @@ const ResetPassword = () => {
                             <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-gray-300 mb-2">
                                 Confirm New Password
                             </label>
-                            <input
-                                id="confirmNewPassword"
-                                name="confirmNewPassword"
-                                type="password"
-                                required
-                                value={formData.confirmNewPassword}
-                                onChange={handleChange}
-                                className="appearance-none relative block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-                                placeholder="Re-enter your password"
-                            />
+                            <div className="relative">
+                                <input
+                                    id="confirmNewPassword"
+                                    name="confirmNewPassword"
+                                    type="password"
+                                    required
+                                    value={formData.confirmNewPassword}
+                                    onChange={handleChange}
+                                    className="appearance-none relative block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-white rounded-lg bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                                    placeholder="Re-enter your password"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-300 transition"
+                                >
+                                    {showConfirmPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+                                </button>
+                            </div>
                             {fieldErrors.confirmNewPassword?.[0] && (
                                 <p className="mt-1 text-sm text-red-400">{fieldErrors.confirmNewPassword[0]}</p>
                             )}

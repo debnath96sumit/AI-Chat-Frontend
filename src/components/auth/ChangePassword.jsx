@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaCheckCircle } from 'react-icons/fa';
+import { FaCheckCircle, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { userAPI } from '../../utils/api';
 import { changePasswordSchema } from '../../utils/validationSchemas';
 
@@ -8,7 +8,9 @@ const ChangePassword = ({ onClose }) => {
     const [success, setSuccess] = useState('');
     const [fieldErrors, setFieldErrors] = useState({});
     const [loading, setLoading] = useState(false);
-
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [formData, setFormData] = useState({
         currentPassword: '',
         newPassword: '',
@@ -96,13 +98,22 @@ const ChangePassword = ({ onClose }) => {
                         <label className="block text-sm text-gray-300 mb-1">
                             Current Password
                         </label>
-                        <input
-                            type="password"
-                            name="currentPassword"
-                            value={formData.currentPassword}
-                            onChange={handleChange}
-                            className="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white focus:ring-2 focus:ring-purple-500 outline-none"
-                        />
+                        <div className="relative">
+                            <input
+                                type="password"
+                                name="currentPassword"
+                                value={formData.currentPassword}
+                                onChange={handleChange}
+                                className="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-300 transition"
+                            >
+                                {showCurrentPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+                            </button>
+                        </div>
                         {fieldErrors.currentPassword?.[0] && (
                             <p className="text-sm text-red-400 mt-1">
                                 {fieldErrors.currentPassword[0]}
@@ -115,13 +126,22 @@ const ChangePassword = ({ onClose }) => {
                         <label className="block text-sm text-gray-300 mb-1">
                             New Password
                         </label>
-                        <input
-                            type="password"
-                            name="newPassword"
-                            value={formData.newPassword}
-                            onChange={handleChange}
-                            className="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white focus:ring-2 focus:ring-purple-500 outline-none"
-                        />
+                        <div className="relative">
+                            <input
+                                type="password"
+                                name="newPassword"
+                                value={formData.newPassword}
+                                onChange={handleChange}
+                                className="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowNewPassword(!showNewPassword)}
+                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-300 transition"
+                            >
+                                {showNewPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+                            </button>
+                        </div>
                         {fieldErrors.newPassword?.[0] && (
                             <p className="text-sm text-red-400 mt-1">
                                 {fieldErrors.newPassword[0]}
@@ -134,13 +154,22 @@ const ChangePassword = ({ onClose }) => {
                         <label className="block text-sm text-gray-300 mb-1">
                             Confirm Password
                         </label>
-                        <input
-                            type="password"
-                            name="confirmPassword"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            className="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white focus:ring-2 focus:ring-purple-500 outline-none"
-                        />
+                        <div className="relative">
+                            <input
+                                type="password"
+                                name="confirmPassword"
+                                value={formData.confirmPassword}
+                                onChange={handleChange}
+                                className="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-300 transition"
+                            >
+                                {showConfirmPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+                            </button>
+                        </div>
                         {fieldErrors.confirmPassword?.[0] && (
                             <p className="text-sm text-red-400 mt-1">
                                 {fieldErrors.confirmPassword[0]}
