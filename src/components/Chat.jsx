@@ -444,6 +444,7 @@ const ChatBot = () => {
         onConfirm={handleLogout}
         title="Confirm Logout"
         message="Are you sure you want to logout from your account?"
+        confirmText="Logout"
       />
       <Modal
         isOpen={settingsModalOpen}

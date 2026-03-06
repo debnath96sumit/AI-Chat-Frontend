@@ -206,7 +206,7 @@ export const chatAPI = {
     const response = await fetch(`${API_BASE_URL}/api/v1/chat/rename/${chatId}`, {
       method: 'PATCH',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ name: newName }),
+      body: JSON.stringify({ title: newName }),
     });
     return handleResponse(response);
   },

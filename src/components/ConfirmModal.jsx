@@ -1,4 +1,4 @@
-const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message }) => {
+const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText = 'Confirm' }) => {
     if (!isOpen) return null;
 
     return (
@@ -19,7 +19,7 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message }) => {
                         onClick={onConfirm}
                         className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-sm"
                     >
-                        Logout
+                        {confirmText}
                     </button>
                 </div>
             </div>
