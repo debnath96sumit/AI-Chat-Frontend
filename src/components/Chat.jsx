@@ -9,6 +9,10 @@ import Modal from './Modal.jsx';
 import Loading from './Loading.jsx';
 import UserProfile from './auth/UserProfile.jsx';
 import ChangePassword from './auth/ChangePassword.jsx';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 const ChatBot = () => {
   const { chatId } = useParams();
@@ -134,7 +138,7 @@ const ChatBot = () => {
       // 1️⃣ POST message (NEW API)
       const response = await chatAPI.sendMessage(currentInput, currentChatId);
 
-      const newChatId = response.data?._id;
+      const newChatId = response.data?.chat?._id;
 
       // If new chat → update URL
       if (!currentChatId && newChatId) {
@@ -322,13 +326,54 @@ const ChatBot = () => {
                     >
                       <div
                         className={`px-4 py-3 rounded-2xl ${message.isBot || message.sender === 'ai'
-                          ? 'bg-white border border-gray-200 text-gray-900'
+                          ? 'bg-white border border-gray-200 text-gray-900 prose prose-sm max-w-none prose-pre:bg-[#1E1E1E] prose-pre:p-0 overflow-hidden'
                           : 'bg-blue-600 text-white'
                           }`}
                       >
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                          {message.text}
-                        </p>
+                        {message.isBot || message.sender === 'ai' ? (
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              code({ node, inline, className, children, ...props }) {
+                                const match = /language-(\w+)/.exec(className || '')
+                                return !inline && match ? (
+                                  <div className="rounded-md overflow-hidden bg-[#1E1E1E] my-2">
+                                    <div className="flex items-center justify-between px-4 py-1.5 bg-gray-800 text-xs text-gray-300">
+                                      <span>{match[1]}</span>
+                                      <button
+                                        onClick={() => navigator.clipboard.writeText(String(children).replace(/\n$/, ''))}
+                                        className="hover:text-white transition-colors flex items-center gap-1"
+                                      >
+                                        <Copy size={12} />
+                                        Copy Code
+                                      </button>
+                                    </div>
+                                    <div className="overflow-x-auto">
+                                      <SyntaxHighlighter
+                                        {...props}
+                                        children={String(children).replace(/\n$/, '')}
+                                        style={vscDarkPlus}
+                                        language={match[1]}
+                                        PreTag="div"
+                                        customStyle={{ margin: 0, padding: '1rem', background: 'transparent' }}
+                                      />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <code {...props} className="bg-gray-100 px-1.5 py-0.5 rounded text-sm text-pink-600">
+                                    {children}
+                                  </code>
+                                )
+                              }
+                            }}
+                          >
+                            {message.text}
+                          </ReactMarkdown>
+                        ) : (
+                          <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                            {message.text}
+                          </p>
+                        )}
                       </div>
 
                       {/* Message Actions (only for bot messages) */}
@@ -440,7 +485,7 @@ const ChatBot = () => {
       {/* Overlay for mobile sidebar */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}

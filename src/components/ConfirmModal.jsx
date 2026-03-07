@@ -1,7 +1,9 @@
+import { createPortal } from 'react-dom';
+
 const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText = 'Confirm' }) => {
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
             <div className="bg-gray-900 text-white w-full max-w-md rounded-xl shadow-xl p-6">
                 <h3 className="text-lg font-semibold mb-3">{title}</h3>
@@ -23,7 +25,8 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText 
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
