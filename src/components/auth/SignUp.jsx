@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { FcGoogle } from 'react-icons/fc';
 import { FaGithub, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useNavigate, Link } from 'react-router-dom';
@@ -21,6 +21,10 @@ const SignUp = () => {
     })
     const [fieldErrors, setFieldErrors] = useState({});
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        document.title = 'Sign Up - AI Pasta';
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

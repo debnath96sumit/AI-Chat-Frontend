@@ -10,6 +10,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import Toaster from './components/Toaster';
 import VerifyOTP from './components/auth/VerifyOTP';
+import NotFound from './components/NotFound';
 
 function App() {
   return (
@@ -39,7 +40,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </AuthProvider>
     </Router>

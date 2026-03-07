@@ -57,16 +57,8 @@ const ChatBot = () => {
       loadChatHistory(chatId);
       setCurrentChatId(chatId);
     } else {
-      // New chat - show welcome message
-      setMessages([
-        {
-          id: 1,
-          text: "Hello! I'm your AI assistant. How can I help you today?",
-          isBot: true,
-          sender: 'ai',
-          timestamp: new Date()
-        }
-      ]);
+      document.title = 'New Chat';
+      setMessages([]);
       setCurrentChatId(null);
     }
   }, [chatId]);
@@ -79,10 +71,11 @@ const ChatBot = () => {
     try {
       const data = await chatAPI.getChatDetails(chatId, page, limit);
       console.log('data', data, data.data);
+      document.title = data.data?.chat?.title || 'Chat';
       // Transform backend messages to frontend format
       const transformedMessages = data.data.messages?.docs?.map(msg => ({
         id: msg.id || msg._id,
-        text: msg.content || msg.message,
+        text: msg.content,
         isBot: msg.role === 'assistant' || msg.sender === 'ai',
         sender: msg.role === 'assistant' ? 'ai' : 'user',
         timestamp: new Date(msg.createdAt || msg.timestamp)
@@ -140,9 +133,8 @@ const ChatBot = () => {
     try {
       // 1️⃣ POST message (NEW API)
       const response = await chatAPI.sendMessage(currentInput, currentChatId);
-      console.log('rrrrrrrr', response);
 
-      const newChatId = response.chatId;
+      const newChatId = response.data?._id;
 
       // If new chat → update URL
       if (!currentChatId && newChatId) {
@@ -288,145 +280,159 @@ const ChatBot = () => {
           </div>
         )}
 
-        {/* Messages Container */}
-        <div className="flex-1 overflow-y-auto px-4 py-6">
-          <div className="max-w-3xl mx-auto space-y-6">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-4 ${message.isBot || message.sender === 'ai' ? '' : 'flex-row-reverse'
-                  }`}
-              >
-                {/* Avatar */}
-                <div
-                  className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${message.isBot || message.sender === 'ai'
-                    ? 'bg-green-100 text-green-600'
-                    : 'bg-blue-100 text-blue-600'
-                    }`}
-                >
-                  {message.isBot || message.sender === 'ai' ? (
-                    <Bot size={16} />
-                  ) : (
-                    <User size={16} />
-                  )}
-                </div>
+        {/* Main Content Area */}
+        <div className={`flex-1 flex flex-col min-h-0 ${messages.length === 0 ? 'justify-center' : ''}`}>
+          {/* Welcome Text */}
+          {messages.length === 0 && (
+            <div className="w-full max-w-3xl mx-auto text-center px-4 mb-8">
+              <h2 className="text-2xl font-medium text-gray-800">
+                Hey {user?.firstName || user?.name || user?.username || 'User'}, what's on your mind?
+              </h2>
+            </div>
+          )}
 
-                {/* Message Content */}
-                <div
-                  className={`flex-1 max-w-2xl ${message.isBot || message.sender === 'ai' ? '' : 'flex flex-col items-end'
-                    }`}
-                >
+          {/* Messages Container */}
+          {messages.length > 0 && (
+            <div className="flex-1 overflow-y-auto px-4 py-6">
+              <div className="max-w-3xl mx-auto space-y-6">
+                {messages.map((message) => (
                   <div
-                    className={`px-4 py-3 rounded-2xl ${message.isBot || message.sender === 'ai'
-                      ? 'bg-white border border-gray-200 text-gray-900'
-                      : 'bg-blue-600 text-white'
+                    key={message.id}
+                    className={`flex gap-4 ${message.isBot || message.sender === 'ai' ? '' : 'flex-row-reverse'
                       }`}
                   >
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                      {message.text}
-                    </p>
-                  </div>
-
-                  {/* Message Actions (only for bot messages) */}
-                  {(message.isBot || message.sender === 'ai') && (
-                    <div className="flex items-center gap-1 mt-2">
-                      <button
-                        onClick={() => copyMessage(message.text)}
-                        className="p-1 rounded hover:bg-gray-100"
-                        title="Copy message"
-                      >
-                        <Copy size={14} className="text-gray-400" />
-                      </button>
-                      <button
-                        className="p-1 rounded hover:bg-gray-100"
-                        title="Good response"
-                      >
-                        <ThumbsUp size={14} className="text-gray-400" />
-                      </button>
-                      <button
-                        className="p-1 rounded hover:bg-gray-100"
-                        title="Bad response"
-                      >
-                        <ThumbsDown size={14} className="text-gray-400" />
-                      </button>
+                    {/* Avatar */}
+                    <div
+                      className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${message.isBot || message.sender === 'ai'
+                        ? 'bg-green-100 text-green-600'
+                        : 'bg-blue-100 text-blue-600'
+                        }`}
+                    >
+                      {message.isBot || message.sender === 'ai' ? (
+                        <Bot size={16} />
+                      ) : (
+                        <User size={16} />
+                      )}
                     </div>
-                  )}
 
-                  <div className="text-xs text-gray-400 mt-1">
-                    {message.timestamp.toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </div>
-                </div>
-              </div>
-            ))}
+                    {/* Message Content */}
+                    <div
+                      className={`flex-1 max-w-2xl ${message.isBot || message.sender === 'ai' ? '' : 'flex flex-col items-end'
+                        }`}
+                    >
+                      <div
+                        className={`px-4 py-3 rounded-2xl ${message.isBot || message.sender === 'ai'
+                          ? 'bg-white border border-gray-200 text-gray-900'
+                          : 'bg-blue-600 text-white'
+                          }`}
+                      >
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                          {message.text}
+                        </p>
+                      </div>
 
-            {/* Typing Indicator */}
-            {isTyping && (
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-green-100 text-green-600">
-                  <Bot size={16} />
-                </div>
-                <div className="flex-1 max-w-2xl">
-                  <div className="px-4 py-3 rounded-2xl bg-white border border-gray-200">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      {/* Message Actions (only for bot messages) */}
+                      {(message.isBot || message.sender === 'ai') && (
+                        <div className="flex items-center gap-1 mt-2">
+                          <button
+                            onClick={() => copyMessage(message.content)}
+                            className="p-1 rounded hover:bg-gray-100"
+                            title="Copy message"
+                          >
+                            <Copy size={14} className="text-gray-400" />
+                          </button>
+                          <button
+                            className="p-1 rounded hover:bg-gray-100"
+                            title="Good response"
+                          >
+                            <ThumbsUp size={14} className="text-gray-400" />
+                          </button>
+                          <button
+                            className="p-1 rounded hover:bg-gray-100"
+                            title="Bad response"
+                          >
+                            <ThumbsDown size={14} className="text-gray-400" />
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="text-xs text-gray-400 mt-1">
+                        {message.timestamp.toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
                     </div>
                   </div>
-                </div>
+                ))}
+
+                {/* Typing Indicator */}
+                {isTyping && (
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-green-100 text-green-600">
+                      <Bot size={16} />
+                    </div>
+                    <div className="flex-1 max-w-2xl">
+                      <div className="px-4 py-3 rounded-2xl bg-white border border-gray-200">
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div ref={messagesEndRef} />
               </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
-
-        {/* Input Area */}
-        <div className="border-t border-gray-200 bg-white px-4 py-4">
-          <div className="max-w-3xl mx-auto">
-            <div className="relative flex items-end gap-3 bg-gray-50 rounded-2xl border border-gray-200 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
-              <textarea
-                ref={inputRef}
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Message AI Assistant..."
-                className="flex-1 min-h-[44px] max-h-32 px-4 py-3 bg-transparent border-none outline-none resize-none placeholder-gray-500"
-                rows={1}
-                style={{
-                  height: 'auto',
-                  minHeight: '44px'
-                }}
-                onInput={(e) => {
-                  e.target.style.height = 'auto';
-                  e.target.style.height = Math.min(e.target.scrollHeight, 128) + 'px';
-                }}
-                disabled={isTyping}
-              />
-              {isTyping ? (
-                <button
-                  onClick={stopStream}
-                  className="m-2 p-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
-                  title="Stop generating"
-                >
-                  <Square size={16} />
-                </button>
-              ) : (
-                <button
-                  onClick={handleSendMessage}
-                  disabled={!inputText.trim()}
-                  className="m-2 p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors"
-                >
-                  <Send size={16} />
-                </button>
-              )}
             </div>
-            <p className="text-xs text-gray-500 mt-2 text-center">
-              AI can make mistakes. Consider checking important information.
-            </p>
+          )}
+
+          {/* Input Area */}
+          <div className={messages.length === 0 ? 'w-full px-4' : 'border-t border-gray-200 bg-white px-4 py-4'}>
+            <div className={messages.length === 0 ? 'max-w-3xl mx-auto w-full' : 'max-w-3xl mx-auto'}>
+              <div className={`relative flex items-end gap-3 bg-gray-50 rounded-2xl border border-gray-200 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 ${messages.length === 0 ? 'shadow-sm' : ''}`}>
+                <textarea
+                  ref={inputRef}
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Message AI Assistant..."
+                  className="flex-1 min-h-[44px] max-h-32 px-4 py-3 bg-transparent border-none outline-none resize-none placeholder-gray-500"
+                  rows={1}
+                  style={{
+                    height: 'auto',
+                    minHeight: '44px'
+                  }}
+                  onInput={(e) => {
+                    e.target.style.height = 'auto';
+                    e.target.style.height = Math.min(e.target.scrollHeight, 128) + 'px';
+                  }}
+                  disabled={isTyping}
+                />
+                {isTyping ? (
+                  <button
+                    onClick={stopStream}
+                    className="m-2 p-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
+                    title="Stop generating"
+                  >
+                    <Square size={16} />
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={!inputText.trim()}
+                    className="m-2 p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors"
+                  >
+                    <Send size={16} />
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                AI can make mistakes. Consider checking important information.
+              </p>
+            </div>
           </div>
         </div>
       </div>

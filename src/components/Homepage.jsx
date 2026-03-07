@@ -79,8 +79,8 @@ const AIChatbotLanding = () => {
             <a href="#pricing" className="hover:text-purple-300 transition-colors">Pricing</a>
           </div>
           <Link to="/sign-up" className="bg-gradient-to-r from-purple-600 to-cyan-600 px-6 py-2 rounded-full hover:from-purple-700 hover:to-cyan-700 transition-all transform hover:scale-105">
-                            Get Started
-                        </Link>
+            Get Started
+          </Link>
         </div>
       </nav>
 
@@ -103,9 +103,9 @@ const AIChatbotLanding = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link to="/sign-up" className="group bg-gradient-to-r from-purple-600 to-cyan-600 px-8 py-4 rounded-full text-lg font-semibold hover:from-purple-700 hover:to-cyan-700 transition-all transform hover:scale-105 flex items-center">
-                            Try It Now
+                Try It Now
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                        </Link>
+              </Link>
               <button className="group flex items-center px-8 py-4 rounded-full text-lg font-semibold border border-gray-600 hover:border-purple-400 transition-all">
                 <Play className="mr-2 w-5 h-5" />
                 Watch Demo
@@ -194,10 +194,10 @@ const AIChatbotLanding = () => {
             <p className="text-xl text-gray-300 mb-8">
               Join thousands of users who have transformed their communication with AI
             </p>
-            
+
             <Link to="/sign-up" className="bg-gradient-to-r from-purple-600 to-cyan-600 px-10 py-4 rounded-full text-lg font-semibold hover:from-purple-700 hover:to-cyan-700 transition-all transform hover:scale-105">
-                            Start Your Free Trial
-                        </Link>
+              Start Your Free Trial
+            </Link>
           </div>
         </div>
       </section>
@@ -209,7 +209,7 @@ const AIChatbotLanding = () => {
             <MessageSquare className="w-6 h-6 text-purple-400" />
             <span className="text-lg font-bold">AI ChatBot</span>
           </div>
-          <p className="text-gray-400">© 2025 AI ChatBot. Built with React. Powered by AI.</p>
+          <p className="text-gray-400">© {new Date().getFullYear()} AI Pasta. Built with ❤️ by Sumit</p>
         </div>
       </footer>
     </div>
