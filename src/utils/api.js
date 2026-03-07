@@ -184,8 +184,8 @@ export const chatAPI = {
   },
 
   // Get all user chats
-  getAllChats: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/chat/get-all`, {
+  getAllChats: async (limit = 10, page = 1) => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/chat/get-all?limit=${limit}&page=${page}`, {
       method: 'GET',
       headers: getAuthHeaders(),
     });

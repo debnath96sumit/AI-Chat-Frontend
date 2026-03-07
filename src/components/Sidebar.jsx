@@ -1,5 +1,5 @@
-import { MoreHorizontal, Plus, Settings, MessageSquare, Pencil, Trash2, Check, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Search, MoreHorizontal, Plus, Settings, MessageSquare, Pencil, Trash2, Check, X } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
 import { chatAPI } from '../utils/api';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmModal from './ConfirmModal';
@@ -12,27 +12,60 @@ const Sidebar = ({
 }) => {
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [chats, setChats] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeMenuId, setActiveMenuId] = useState(null);
   const [renamingChatId, setRenamingChatId] = useState(null);
   const [tempTitle, setTempTitle] = useState('');
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [chatToDelete, setChatToDelete] = useState(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  const filteredChats = useMemo(() => {
+    return chats.filter(chat =>
+      chat.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [chats, searchQuery]);
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    const loadChats = async () => {
-      try {
-        const res = await chatAPI.getAllChats(10, 1);
-        setChats(res.data.docs);
-      } catch (err) {
-        console.log(err);
-      }
-    };
+  const loadChats = async (pageNum = 1) => {
+    if (pageNum > 1) setIsLoadingMore(true);
+    try {
+      const limit = 10;
+      const res = await chatAPI.getAllChats(limit, pageNum);
+      const newChats = res.data.docs;
 
-    loadChats();
+      if (pageNum === 1) {
+        setChats(newChats);
+      } else {
+        setChats(prev => [...prev, ...newChats]);
+      }
+
+      setHasMore(newChats.length === limit);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    loadChats(1);
   }, []);
+
+  const handleScroll = (e) => {
+    const { scrollTop, clientHeight, scrollHeight } = e.target;
+    if (scrollHeight - scrollTop <= clientHeight + 50) {
+      if (!isLoadingMore && hasMore) {
+        const nextPage = page + 1;
+        setPage(nextPage);
+        loadChats(nextPage);
+      }
+    }
+  };
 
   const handleChatOpen = (chatId) => {
     navigate(`/chat/${chatId}`);
@@ -111,70 +144,94 @@ const Sidebar = ({
           </Link>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 custom-scrollbar">
-          <div className="space-y-2">
-            {chats.map((chat) => (
-              <div
-                key={chat._id}
-                className={`relative flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer group hover:bg-gray-800 ${location.pathname.includes(chat._id) ? 'bg-gray-800' : ''
-                  }`}
-                onClick={() => handleChatOpen(chat._id)}
-              >
-                <MessageSquare size={16} className="text-gray-400 shrink-0" />
-                {renamingChatId === chat._id ? (
-                  <input
-                    autoFocus
-                    className="flex-1 text-sm bg-gray-700 border border-blue-500 rounded px-1 outline-none"
-                    value={tempTitle}
-                    onChange={(e) => setTempTitle(e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(e, chat)}
-                    onClick={(e) => e.stopPropagation()}
-                    onBlur={() => handleRename(chat)}
-                  />
-                ) : (
-                  <>
-                    <span className="flex-1 text-sm truncate">{chat.title}</span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveMenuId(activeMenuId === chat._id ? null : chat._id);
-                      }}
-                      className="p-1 rounded hover:bg-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <MoreHorizontal size={14} className="text-gray-400" />
-                    </button>
-                  </>
-                )}
-
-                {activeMenuId === chat._id && (
-                  <div className="absolute right-0 top-full mt-1 w-32 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-[60] py-1">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setRenamingChatId(chat._id);
-                        setTempTitle(chat.title);
-                        setActiveMenuId(null);
-                      }}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-700 text-sm flex items-center gap-2"
-                    >
-                      <Pencil size={14} /> Rename
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setChatToDelete(chat);
-                        setDeleteModalOpen(true);
-                        setActiveMenuId(null);
-                      }}
-                      className="w-full text-left px-4 py-2 hover:bg-red-600/20 text-red-400 text-sm flex items-center gap-2"
-                    >
-                      <Trash2 size={14} /> Delete
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
+        <div className="px-4 pb-3">
+          <div className="relative flex items-center bg-gray-800 rounded-lg px-3 py-2 border border-gray-700 focus-within:border-gray-500 transition-colors">
+            <Search size={16} className="text-gray-400 mr-2 shrink-0" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 outline-none w-full"
+            />
           </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 custom-scrollbar" onScroll={handleScroll}>
+          <div className="space-y-2">
+            {filteredChats.length === 0 ? (
+              <div className="text-center text-gray-500 text-sm py-4">
+                No chats found
+              </div>
+            ) : (
+              filteredChats.map((chat) => (
+                <div
+                  key={chat._id}
+                  className={`relative flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer group hover:bg-gray-800 ${location.pathname.includes(chat._id) ? 'bg-gray-800' : ''
+                    }`}
+                  onClick={() => handleChatOpen(chat._id)}
+                >
+                  <MessageSquare size={16} className="text-gray-400 shrink-0" />
+                  {renamingChatId === chat._id ? (
+                    <input
+                      autoFocus
+                      className="flex-1 text-sm bg-gray-700 border border-blue-500 rounded px-1 outline-none"
+                      value={tempTitle}
+                      onChange={(e) => setTempTitle(e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, chat)}
+                      onClick={(e) => e.stopPropagation()}
+                      onBlur={() => handleRename(chat)}
+                    />
+                  ) : (
+                    <>
+                      <span className="flex-1 text-sm truncate">{chat.title}</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMenuId(activeMenuId === chat._id ? null : chat._id);
+                        }}
+                        className="p-1 rounded hover:bg-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <MoreHorizontal size={14} className="text-gray-400" />
+                      </button>
+                    </>
+                  )}
+
+                  {activeMenuId === chat._id && (
+                    <div className="absolute right-0 top-full mt-1 w-32 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-[60] py-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRenamingChatId(chat._id);
+                          setTempTitle(chat.title);
+                          setActiveMenuId(null);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-700 text-sm flex items-center gap-2"
+                      >
+                        <Pencil size={14} /> Rename
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setChatToDelete(chat);
+                          setDeleteModalOpen(true);
+                          setActiveMenuId(null);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-red-600/20 text-red-400 text-sm flex items-center gap-2"
+                      >
+                        <Trash2 size={14} /> Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+          {isLoadingMore && (
+            <div className="flex justify-center py-4">
+              <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          )}
         </div>
 
         <div className="p-4 border-t border-gray-700">
