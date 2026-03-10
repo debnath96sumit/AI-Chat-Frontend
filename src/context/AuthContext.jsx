@@ -15,16 +15,19 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
+  const [refreshToken, setRefreshTokenState] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   // Initialize auth state from localStorage
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
+    const storedRefreshToken = localStorage.getItem('refresh_token');
     const storedUser = localStorage.getItem('user');
 
     if (storedToken && storedUser) {
       setToken(storedToken);
+      if (storedRefreshToken) setRefreshTokenState(storedRefreshToken);
       setUser(JSON.parse(storedUser));
     }
     setLoading(false);
@@ -36,7 +39,12 @@ export const AuthProvider = ({ children }) => {
       const data = await authAPI.login(email, password);
 
       localStorage.setItem('token', data.data.accessToken);
+      if (data.data.refreshToken) {
+        localStorage.setItem('refresh_token', data.data.refreshToken);
+        setRefreshTokenState(data.data.refreshToken);
+      }
       localStorage.setItem('user', JSON.stringify(data.data.user));
+      
       setToken(data.data.accessToken);
       setUser(data.data.user);
 
@@ -52,6 +60,10 @@ export const AuthProvider = ({ children }) => {
       const data = await authAPI.signup(fullName, email, phone, password);
 
       localStorage.setItem('token', data.data.accessToken);
+      if (data.data.refreshToken) {
+        localStorage.setItem('refresh_token', data.data.refreshToken);
+        setRefreshTokenState(data.data.refreshToken);
+      }
       localStorage.setItem('user', JSON.stringify(data.data.user));
       setToken(data.data.accessToken);
       setUser(data.data.user);
@@ -68,6 +80,10 @@ export const AuthProvider = ({ children }) => {
       const data = await authAPI.socialSignIn(provider, code, redirectUri);
 
       localStorage.setItem('token', data.accessToken);
+      if (data.refreshToken) {
+        localStorage.setItem('refresh_token', data.refreshToken);
+        setRefreshTokenState(data.refreshToken);
+      }
       localStorage.setItem('user', JSON.stringify(data.user));
       setToken(data.accessToken);
       setUser(data.user);
@@ -88,8 +104,10 @@ export const AuthProvider = ({ children }) => {
       console.error('Logout error:', error);
     } finally {
       localStorage.removeItem('token');
+      localStorage.removeItem('refresh_token');
       localStorage.removeItem('user');
       setToken(null);
+      setRefreshTokenState(null);
       setUser(null);
       navigate('/sign-in');
     }
@@ -117,6 +135,7 @@ export const AuthProvider = ({ children }) => {
     // State
     user,
     token,
+    refreshToken,
     isAuthenticated: !!token,
     loading,
 

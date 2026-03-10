@@ -111,11 +111,6 @@ const ChatBot = () => {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
   const handleSendMessage = async () => {
     if (!inputText.trim() || isTyping) return;
 
@@ -492,7 +487,7 @@ const ChatBot = () => {
       <ConfirmModal
         isOpen={logoutModalOpen}
         onClose={() => setLogoutModalOpen(false)}
-        onConfirm={handleLogout}
+        onConfirm={() => logout()}
         title="Confirm Logout"
         message="Are you sure you want to logout from your account?"
         confirmText="Logout"
