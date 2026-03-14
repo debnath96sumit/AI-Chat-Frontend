@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { chatAPI } from '../utils/api';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import ConfirmModal from './ConfirmModal';
+import { useAuth } from '../context/AuthContext';
 
 const Sidebar = ({
   sidebarOpen,
@@ -21,6 +22,7 @@ const Sidebar = ({
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const { user } = useAuth();
 
   const filteredChats = useMemo(() => {
     return chats.filter(chat =>
@@ -244,13 +246,27 @@ const Sidebar = ({
         </div>
         {showSettingsMenu && (
           <div className="absolute bottom-16 left-4 right-4 bg-gray-800 border border-gray-700 rounded-lg shadow-lg overflow-hidden">
-            <button
+            {/* hover area should be 4px from all side */}
+            <div
+              className="flex items-center gap-2 px-4 py-2 hover:bg-gray-700 cursor-pointer"
               onClick={() => {
                 openModal('profile')
                 setShowSettingsMenu(false);
               }}
-              className="w-full text-left px-4 py-2 hover:bg-gray-700 text-sm" > Profile
-            </button>
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xl font-bold overflow-hidden">
+                <span>{user?.fullName?.charAt(0)?.toUpperCase()}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm text-gray-500">
+                  {user?.fullName}
+                </span>
+                <span className="text-sm text-gray-500">
+                  {user?.email}
+                </span>
+              </div>
+            </div>
+
             <button
               onClick={() => {
                 openModal('password-change')

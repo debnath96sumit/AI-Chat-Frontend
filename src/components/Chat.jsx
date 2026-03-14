@@ -267,7 +267,7 @@ const ChatBot = () => {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-500">
-              {user?.username || 'User'}
+              {user?.fullName || 'User'}
             </span>
           </div>
         </div>
