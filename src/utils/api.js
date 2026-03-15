@@ -189,8 +189,12 @@ export const userAPI = {
 };
 
 export const chatAPI = {
-  sendMessage: async (message, chatId) => {
-    return axiosInstance.post('/api/v1/chat/send-message', { message, chatId });
+  getModels: async () => {
+    return axiosInstance.get('/api/v1/chat/llm-models');
+  },
+
+  sendMessage: async (message, chatId, provider, modelId) => {
+    return axiosInstance.post('/api/v1/chat/send-message', { message, chatId, provider, modelId });
   },
 
   // Note: Streaming endpoints are tricky with axios.

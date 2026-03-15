@@ -27,6 +27,9 @@ const ChatBot = () => {
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [activeSettingsTab, setActiveSettingsTab] = useState(null);
+  const [availableModels, setAvailableModels] = useState(null);
+  const [selectedProvider, setSelectedProvider] = useState('groq');
+  const [selectedModelId, setSelectedModelId] = useState('');
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
@@ -67,6 +70,32 @@ const ChatBot = () => {
     }
   }, [chatId]);
 
+  // Fetch available models
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const response = await chatAPI.getModels();
+        if (response?.data) {
+          setAvailableModels(response.data);
+          // Set default provider and model if not already set
+          if (response.data.groq) {
+            setSelectedProvider('groq');
+            setSelectedModelId(response.data.groq.defaultModel);
+          } else {
+            const firstProvider = Object.keys(response.data)[0];
+            if (firstProvider) {
+              setSelectedProvider(firstProvider);
+              setSelectedModelId(response.data[firstProvider].defaultModel);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch models:', err);
+      }
+    };
+    fetchModels();
+  }, []);
+
   // Load chat history from backend
   const loadChatHistory = async (chatId, page = 1, limit = 50) => {
     setLoading(true);
@@ -76,6 +105,9 @@ const ChatBot = () => {
       const data = await chatAPI.getChatDetails(chatId, page, limit);
       console.log('data', data, data.data);
       document.title = data.data?.chat?.title || 'Chat';
+      // set selected provider and model id
+      setSelectedProvider(data.data?.chat?.provider);
+      setSelectedModelId(data.data?.chat?.modelId);
       // Transform backend messages to frontend format
       const transformedMessages = data.data.messages?.docs?.map(msg => ({
         id: msg.id || msg._id,
@@ -131,8 +163,11 @@ const ChatBot = () => {
 
     try {
       // 1️⃣ POST message (NEW API)
-      const response = await chatAPI.sendMessage(currentInput, currentChatId);
-
+      const response = await chatAPI.sendMessage(currentInput, currentChatId, selectedProvider, selectedModelId);
+      // set selected model id
+      setSelectedModelId(response.data?.chat?.modelId);
+      // set selected provider
+      setSelectedProvider(response.data?.chat?.provider);
       const newChatId = response.data?.chat?._id;
 
       // If new chat → update URL
@@ -432,6 +467,40 @@ const ChatBot = () => {
           {/* Input Area */}
           <div className={messages.length === 0 ? 'w-full px-4' : 'border-t border-gray-200 bg-white px-4 py-4'}>
             <div className={messages.length === 0 ? 'max-w-3xl mx-auto w-full' : 'max-w-3xl mx-auto'}>
+              {/* Model Selection UI */}
+              {availableModels && Object.keys(availableModels).length > 0 && (
+                <div className="flex gap-2 mb-2">
+                  <select
+                    value={selectedProvider}
+                    onChange={(e) => {
+                      const newProvider = e.target.value;
+                      setSelectedProvider(newProvider);
+                      setSelectedModelId(availableModels[newProvider]?.defaultModel || '');
+                    }}
+                    className="text-xs bg-gray-50 border border-gray-200 text-gray-700 py-1.5 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {Object.entries(availableModels).map(([key, provider]) => (
+                      <option key={key} value={key}>
+                        {provider.label}
+                      </option>
+                    ))}
+                  </select>
+
+                  {availableModels[selectedProvider]?.models && (
+                    <select
+                      value={selectedModelId}
+                      onChange={(e) => setSelectedModelId(e.target.value)}
+                      className="text-xs bg-gray-50 border border-gray-200 text-gray-700 py-1.5 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 max-w-[200px] truncate"
+                    >
+                      {availableModels[selectedProvider].models.map((model) => (
+                        <option key={model.id} value={model.id}>
+                          {model.label} {!model.free && '($)'}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              )}
               <div className={`relative flex items-end gap-3 bg-gray-50 rounded-2xl border border-gray-200 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 ${messages.length === 0 ? 'shadow-sm' : ''}`}>
                 <textarea
                   ref={inputRef}
