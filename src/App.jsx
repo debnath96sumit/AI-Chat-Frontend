@@ -10,6 +10,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import Toaster from './components/Toaster';
 import VerifyOTP from './components/auth/VerifyOTP';
+import PublicRoute from './components/auth/PublicRoute';
 import NotFound from './components/NotFound';
 
 function App() {
@@ -18,12 +19,12 @@ function App() {
       <AuthProvider>
         <Toaster />
         <Routes>
-          <Route path="/" element={<Homepage />} />
-          <Route path="/sign-in" element={<SignIn />} />
-          <Route path="/sign-up" element={<SignUp />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/verify-otp" element={<VerifyOTP />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/" element={<PublicRoute><Homepage /></PublicRoute>} />
+          <Route path="/sign-in" element={<PublicRoute><SignIn /></PublicRoute>} />
+          <Route path="/sign-up" element={<PublicRoute><SignUp /></PublicRoute>} />
+          <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+          <Route path="/verify-otp" element={<PublicRoute><VerifyOTP /></PublicRoute>} />
+          <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
           <Route
             path="/new"
             element={

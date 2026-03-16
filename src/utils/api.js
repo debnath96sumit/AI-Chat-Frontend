@@ -197,19 +197,6 @@ export const chatAPI = {
     return axiosInstance.post('/api/v1/chat/send-message', { message, chatId, provider, modelId });
   },
 
-  // Note: Streaming endpoints are tricky with axios.
-  // We keep fetch for this specific call or configure axios to handle streams.
-  // Assuming it returns SSE or some raw stream response, fetch is better.
-  getMessageStream: async (messageId) => {
-    const token = localStorage.getItem('token');
-    return fetch(`${API_BASE_URL}/api/v1/chat/stream/${messageId}`, {
-      method: 'GET',
-      headers: {
-        ...(token && { 'Authorization': `Bearer ${token}` }),
-      },
-    });
-  },
-
   getAllChats: async (limit = 10, page = 1) => {
     return axiosInstance.get(`/api/v1/chat/get-all`, { params: { limit, page } });
   },
