@@ -180,7 +180,7 @@ export const userAPI = {
   },
 
   updateProfile: async (userData) => {
-    return axiosInstance.patch('/api/v1/user/update-profile', userData);
+    return axiosInstance.post('/api/v1/user/update-profile', userData);
   },
 
   changePassword: async ({ oldPassword, newPassword }) => {
@@ -214,8 +214,18 @@ export const chatAPI = {
   },
 };
 
+export const mediaAPI = {
+  uploadSingleFile: async (formData) => {
+    return axiosInstance.post('/api/v1/media/upload-single-file', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  }
+}
 export default {
   auth: authAPI,
   user: userAPI,
   chat: chatAPI,
+  media: mediaAPI,
 };

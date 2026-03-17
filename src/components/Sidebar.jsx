@@ -255,7 +255,11 @@ const Sidebar = ({
               }}
             >
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xl font-bold overflow-hidden">
-                <span>{user?.fullName?.charAt(0)?.toUpperCase()}</span>
+                {user?.profileImage?.url ? (
+                  <img src={user?.profileImage?.url} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span>{user?.fullName?.charAt(0)?.toUpperCase()}</span>
+                )}
               </div>
               <div className="flex flex-col">
                 <span className="text-sm text-gray-500">

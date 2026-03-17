@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
         setRefreshTokenState(data.data.refreshToken);
       }
       localStorage.setItem('user', JSON.stringify(data.data.user));
-      
+
       setToken(data.data.accessToken);
       setUser(data.data.user);
 
@@ -119,6 +119,17 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(updatedUser));
   };
 
+  const updateProfileDetails = async (formData) => {
+    try {
+      const data = await userAPI.updateProfile(formData);
+      setUser(data.data);
+      localStorage.setItem('user', JSON.stringify(data.data));
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
   // Refresh user profile from API
   const refreshUser = async () => {
     try {
@@ -146,6 +157,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateUser,
     refreshUser,
+    updateProfileDetails
   };
 
   if (loading) {
