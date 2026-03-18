@@ -134,8 +134,8 @@ export const AuthProvider = ({ children }) => {
   const refreshUser = async () => {
     try {
       const data = await userAPI.getProfile();
-      setUser(data.user);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      setUser(data.data);
+      localStorage.setItem('user', JSON.stringify(data.data));
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
@@ -157,6 +157,8 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateUser,
     refreshUser,
+    setToken,
+    setRefreshTokenState,
     updateProfileDetails
   };
 

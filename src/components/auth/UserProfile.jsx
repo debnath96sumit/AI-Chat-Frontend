@@ -56,7 +56,6 @@ const UserProfile = ({ onClose }) => {
 
     const handleFileChange = async (e) => {
         const file = e.target.files[0];
-        console.log('fffffffff', file);
 
         if (!file) return;
 

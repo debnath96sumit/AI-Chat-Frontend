@@ -152,7 +152,9 @@ export const authAPI = {
   socialSignIn: async (provider, code, redirectUri) => {
     return axiosInstance.post('/api/v1/auth/social-signin', { provider, code, redirectUri });
   },
-
+  githubSignIn: async () => {
+    return axiosInstance.get('/api/v1/auth/github');
+  },
   logout: async () => {
     return axiosInstance.get('/api/v1/auth/logout-user');
   },

@@ -12,6 +12,7 @@ import Toaster from './components/Toaster';
 import VerifyOTP from './components/auth/VerifyOTP';
 import PublicRoute from './components/auth/PublicRoute';
 import NotFound from './components/NotFound';
+import GithubAuthCallback from './components/auth/GithubAuthCallback';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
           <Route path="/verify-otp" element={<PublicRoute><VerifyOTP /></PublicRoute>} />
           <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
+          <Route path="/auth/github/callback" element={<PublicRoute><GithubAuthCallback /></PublicRoute>} />
           <Route
             path="/new"
             element={

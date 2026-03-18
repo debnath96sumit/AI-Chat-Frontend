@@ -4,6 +4,7 @@ import { FaGithub, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { signInSchema } from '../../utils/validationSchemas';
+import { pushToast } from '../../utils/toaster';
 
 const SignIn = () => {
     const { login } = useAuth();
@@ -16,6 +17,13 @@ const SignIn = () => {
         document.title = 'Sign In - AI Pasta';
     }, []);
 
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const error = params.get('error');
+        if (error) {
+            pushToast({ message: error, type: 'error' });
+        }
+    }, []);
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -60,6 +68,10 @@ const SignIn = () => {
     const handleSocialSignIn = (provider) => {
         console.log(provider);
 
+    }
+
+    const handleGithubSignIn = async () => {
+        window.location.href = `${import.meta.env.VITE_API_URL}/api/v1/auth/github`;
     }
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 px-4 py-12">
@@ -168,15 +180,15 @@ const SignIn = () => {
                         <button
                             type="button"
                             onClick={() => handleSocialSignIn('google')}
-                            className="flex items-center justify-center gap-2 px-4 py-3 border border-slate-600 rounded-lg text-white bg-slate-700/50 hover:bg-slate-700 transition"
+                            className="flex items-center justify-center gap-2 px-4 py-3 border border-slate-600 rounded-lg text-white bg-slate-700/50 hover:bg-slate-700 transition cursor-pointer"
                         >
                             <FcGoogle className="text-xl" />
                             Google
                         </button>
                         <button
                             type="button"
-                            onClick={() => handleSocialSignIn('github')}
-                            className="flex items-center justify-center gap-2 px-4 py-3 border border-slate-600 rounded-lg text-white bg-slate-700/50 hover:bg-slate-700 transition"
+                            onClick={() => handleGithubSignIn()}
+                            className="flex items-center justify-center gap-2 px-4 py-3 border border-slate-600 rounded-lg text-white bg-slate-700/50 hover:bg-slate-700 transition cursor-pointer"
                         >
                             <FaGithub className="text-xl" />
                             GitHub
