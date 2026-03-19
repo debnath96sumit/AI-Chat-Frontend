@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authAPI, userAPI } from '../utils/api';
+import Loading from '../components/Loading';
 
 const AuthContext = createContext(null);
 
@@ -23,12 +24,11 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedRefreshToken = localStorage.getItem('refresh_token');
-    const storedUser = localStorage.getItem('user');
 
-    if (storedToken && storedUser) {
+    if (storedToken) {
       setToken(storedToken);
       if (storedRefreshToken) setRefreshTokenState(storedRefreshToken);
-      setUser(JSON.parse(storedUser));
+      refreshUser();
     }
     setLoading(false);
   }, []);
@@ -43,7 +43,6 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('refresh_token', data.data.refreshToken);
         setRefreshTokenState(data.data.refreshToken);
       }
-      localStorage.setItem('user', JSON.stringify(data.data.user));
 
       setToken(data.data.accessToken);
       setUser(data.data.user);
@@ -64,7 +63,6 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('refresh_token', data.data.refreshToken);
         setRefreshTokenState(data.data.refreshToken);
       }
-      localStorage.setItem('user', JSON.stringify(data.data.user));
       setToken(data.data.accessToken);
       setUser(data.data.user);
 
@@ -84,7 +82,6 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('refresh_token', data.refreshToken);
         setRefreshTokenState(data.refreshToken);
       }
-      localStorage.setItem('user', JSON.stringify(data.user));
       setToken(data.accessToken);
       setUser(data.user);
 
@@ -116,14 +113,12 @@ export const AuthProvider = ({ children }) => {
   // Update user data in context
   const updateUser = (updatedUser) => {
     setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
   };
 
   const updateProfileDetails = async (formData) => {
     try {
       const data = await userAPI.updateProfile(formData);
       setUser(data.data);
-      localStorage.setItem('user', JSON.stringify(data.data));
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
@@ -135,7 +130,6 @@ export const AuthProvider = ({ children }) => {
     try {
       const data = await userAPI.getProfile();
       setUser(data.data);
-      localStorage.setItem('user', JSON.stringify(data.data));
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
@@ -164,9 +158,7 @@ export const AuthProvider = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
+      <Loading />
     );
   }
 

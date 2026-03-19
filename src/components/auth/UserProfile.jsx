@@ -217,7 +217,7 @@ const UserProfile = ({ onClose }) => {
                                             setFormData({
                                                 fullName: user.fullName,
                                                 email: user.email,
-                                                profilePicture: user.profilePicture || ''
+                                                profileImage: user.profileImage || {}
                                             });
                                         }}
                                         className="flex-1 bg-slate-700 py-2 rounded text-white"
