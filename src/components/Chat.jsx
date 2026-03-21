@@ -41,7 +41,7 @@ const ChatBot = () => {
     setSettingsModalOpen(true);
   };
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: isTyping ? "auto" : "smooth" });
   };
 
   useEffect(() => {
@@ -177,6 +177,7 @@ const ChatBot = () => {
       }
 
       // 2️⃣ Start streaming
+      setIsTyping(false);
       handleStreamingResponse(newChatId);
 
     } catch (err) {
@@ -209,7 +210,6 @@ const ChatBot = () => {
     eventSource.onmessage = (event) => {
 
       if (event.data === '__END__') {
-        setIsTyping(false);
         eventSource.close();
         eventSourceRef.current = null;
         return;
@@ -245,7 +245,6 @@ const ChatBot = () => {
 
     eventSource.onerror = (err) => {
       console.error('SSE error:', err);
-      setIsTyping(false);
       eventSource.close();
       eventSourceRef.current = null;
     };
