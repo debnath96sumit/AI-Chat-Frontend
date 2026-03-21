@@ -1,18 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { FaCog, FaCamera } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
+import { mediaAPI } from '../../utils/api';
 
 const UserProfile = ({ onClose }) => {
-    const { user, updateProfile } = useAuth();
+    const { user, updateProfileDetails } = useAuth();
 
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [isEditing, setIsEditing] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
 
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
-        profilePicture: ''
+        profileImage: {
+            mediaId: '',
+            url: ''
+        }
     });
 
     useEffect(() => {
@@ -20,7 +25,7 @@ const UserProfile = ({ onClose }) => {
             setFormData({
                 fullName: user.fullName || '',
                 email: user.email || '',
-                profilePicture: user.profilePicture || ''
+                profileImage: user.profileImage || {}
             });
         }
     }, [user]);
@@ -38,7 +43,7 @@ const UserProfile = ({ onClose }) => {
         setSuccess('');
 
         try {
-            await updateProfile(formData);
+            await updateProfileDetails(formData);
             setSuccess('Profile updated successfully');
             setIsEditing(false);
 
@@ -46,6 +51,50 @@ const UserProfile = ({ onClose }) => {
             // setTimeout(() => onClose?.(), 1500);
         } catch (err) {
             setError(err.message || 'Update failed');
+        }
+    };
+
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+
+        if (!file) return;
+
+        // Basic validation
+        if (!file.type.startsWith('image/')) {
+            setError('Please upload an image file');
+            return;
+        }
+
+        const uploadData = new FormData();
+        uploadData.append('file', file);
+
+        setIsUploading(true);
+        setError('');
+        setSuccess('');
+
+        try {
+            const response = await mediaAPI.uploadSingleFile(uploadData);
+            // Assuming response structure contains data with _id and url
+            // Based on user request: "from the reponse get the _id, url and set it in form data"
+            const { _id, url } = response.data || {};
+
+            if (_id && url) {
+                setFormData(prev => ({
+                    ...prev,
+                    profileImage: {
+                        mediaId: _id,
+                        url: url
+                    }
+                }));
+                setSuccess('Image uploaded successfully. Click Save to update profile.');
+            } else {
+                throw new Error('Invalid response from server');
+            }
+        } catch (err) {
+            console.error('Upload error:', err);
+            setError(err.response?.data?.message || 'File upload failed');
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -61,9 +110,9 @@ const UserProfile = ({ onClose }) => {
                     <div className="flex flex-col items-center space-y-4">
                         <div className="relative">
                             <div className="w-28 h-28 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-3xl font-bold overflow-hidden">
-                                {formData.profilePicture
+                                {formData.profileImage.url
                                     ? <img
-                                        src={formData.profilePicture}
+                                        src={formData.profileImage.url}
                                         alt="Profile"
                                         className="w-full h-full object-cover"
                                     />
@@ -71,9 +120,23 @@ const UserProfile = ({ onClose }) => {
                             </div>
 
                             {isEditing && (
-                                <button className="absolute bottom-0 right-0 bg-purple-600 rounded-full p-2 text-white">
-                                    <FaCamera size={14} />
-                                </button>
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => document.getElementById('profile-upload').click()}
+                                        disabled={isUploading}
+                                        className="absolute bottom-0 right-0 bg-purple-600 rounded-full p-2 text-white hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                    >
+                                        <FaCamera size={14} />
+                                    </button>
+                                    <input
+                                        id="profile-upload"
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={handleFileChange}
+                                    />
+                                </>
                             )}
                         </div>
 
@@ -137,19 +200,14 @@ const UserProfile = ({ onClose }) => {
                                 placeholder="Email"
                             />
 
-                            <input
-                                name="profilePicture"
-                                value={formData.profilePicture}
-                                onChange={handleChange}
-                                disabled={!isEditing}
-                                className="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white disabled:opacity-60"
-                                placeholder="Profile Picture URL"
-                            />
-
                             {isEditing && (
                                 <div className="flex gap-3 pt-2">
-                                    <button className="flex-1 bg-purple-600 py-2 rounded text-white">
-                                        Save
+                                    <button
+                                        type="submit"
+                                        disabled={isUploading}
+                                        className="flex-1 bg-purple-600 py-2 rounded text-white disabled:opacity-50"
+                                    >
+                                        {isUploading ? 'Uploading...' : 'Save'}
                                     </button>
 
                                     <button
@@ -159,7 +217,7 @@ const UserProfile = ({ onClose }) => {
                                             setFormData({
                                                 fullName: user.fullName,
                                                 email: user.email,
-                                                profilePicture: user.profilePicture || ''
+                                                profileImage: user.profileImage || {}
                                             });
                                         }}
                                         className="flex-1 bg-slate-700 py-2 rounded text-white"

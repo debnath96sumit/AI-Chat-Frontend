@@ -76,11 +76,10 @@ const SignUp = () => {
             setLoading(false);
         }
     };
-    const handleSocialSignIn = (provider) => {
-        console.log(provider);
 
+    const handleGithubSignIn = async () => {
+        window.location.href = `${import.meta.env.VITE_API_URL}/api/v1/auth/github`;
     }
-
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 px-4 py-12">
             <div className="max-w-md w-full space-y-8 bg-slate-800/50 backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-slate-700">
@@ -231,7 +230,7 @@ const SignUp = () => {
                         <button
                             type="button"
                             onClick={() => googleBtnRef.current?.click()}
-                            className="flex items-center justify-center gap-2 px-4 py-3 border border-slate-600 rounded-lg text-white bg-slate-700/50 hover:bg-slate-700 transition"
+                            className="flex items-center justify-center gap-2 px-4 py-3 border border-slate-600 rounded-lg text-white bg-slate-700/50 hover:bg-slate-700 transition cursor-pointer"
                         >
                             <FcGoogle className="text-xl" />
                             Google
@@ -244,8 +243,8 @@ const SignUp = () => {
                         </div>
                         <button
                             type="button"
-                            onClick={() => handleSocialSignIn('github')}
-                            className="flex items-center justify-center gap-2 px-4 py-3 border border-slate-600 rounded-lg text-white bg-slate-700/50 hover:bg-slate-700 transition"
+                            onClick={() => handleGithubSignIn()}
+                            className="flex items-center justify-center gap-2 px-4 py-3 border border-slate-600 rounded-lg text-white bg-slate-700/50 hover:bg-slate-700 transition cursor-pointer"
                         >
                             <FaGithub className="text-xl" />
                             GitHub

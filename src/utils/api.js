@@ -152,7 +152,9 @@ export const authAPI = {
   socialSignIn: async (provider, code, redirectUri) => {
     return axiosInstance.post('/api/v1/auth/social-signin', { provider, code, redirectUri });
   },
-
+  githubSignIn: async () => {
+    return axiosInstance.get('/api/v1/auth/github');
+  },
   logout: async () => {
     return axiosInstance.get('/api/v1/auth/logout-user');
   },
@@ -180,7 +182,7 @@ export const userAPI = {
   },
 
   updateProfile: async (userData) => {
-    return axiosInstance.patch('/api/v1/user/update-profile', userData);
+    return axiosInstance.post('/api/v1/user/update-profile', userData);
   },
 
   changePassword: async ({ oldPassword, newPassword }) => {
@@ -195,19 +197,6 @@ export const chatAPI = {
 
   sendMessage: async (message, chatId, provider, modelId) => {
     return axiosInstance.post('/api/v1/chat/send-message', { message, chatId, provider, modelId });
-  },
-
-  // Note: Streaming endpoints are tricky with axios.
-  // We keep fetch for this specific call or configure axios to handle streams.
-  // Assuming it returns SSE or some raw stream response, fetch is better.
-  getMessageStream: async (messageId) => {
-    const token = localStorage.getItem('token');
-    return fetch(`${API_BASE_URL}/api/v1/chat/stream/${messageId}`, {
-      method: 'GET',
-      headers: {
-        ...(token && { 'Authorization': `Bearer ${token}` }),
-      },
-    });
   },
 
   getAllChats: async (limit = 10, page = 1) => {
@@ -227,8 +216,18 @@ export const chatAPI = {
   },
 };
 
+export const mediaAPI = {
+  uploadSingleFile: async (formData) => {
+    return axiosInstance.post('/api/v1/media/upload-single-file', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  }
+}
 export default {
   auth: authAPI,
   user: userAPI,
   chat: chatAPI,
+  media: mediaAPI,
 };

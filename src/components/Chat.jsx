@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Send, User, Bot, Copy, ThumbsUp, ThumbsDown, Menu, Square } from 'lucide-react';
+import { Send, User, Bot, Copy, ThumbsUp, ThumbsDown, Menu, Square, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { chatAPI } from '../utils/api';
 import Sidebar from './Sidebar.jsx';
@@ -16,7 +16,7 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 const ChatBot = () => {
   const { chatId } = useParams();
-
+  const [copiedId, setCopiedId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -257,8 +257,10 @@ const ChatBot = () => {
     }
   };
 
-  const copyMessage = (text) => {
+  const handleCopy = (id, text) => {
     navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000); // revert after 2s
   };
 
   // Cleanup on unmount
@@ -409,20 +411,23 @@ const ChatBot = () => {
                       {(message.isBot || message.sender === 'ai') && (
                         <div className="flex items-center gap-1 mt-2">
                           <button
-                            onClick={() => copyMessage(message.content)}
-                            className="p-1 rounded hover:bg-gray-100"
+                            onClick={() => handleCopy(message._id, message.text)}
+                            className="p-1 rounded hover:bg-gray-100 cursor-pointer"
                             title="Copy message"
                           >
-                            <Copy size={14} className="text-gray-400" />
+                            {copiedId === message._id
+                              ? <Check size={14} className="text-green-500" />
+                              : <Copy size={14} className="text-gray-400" />
+                            }
                           </button>
                           <button
-                            className="p-1 rounded hover:bg-gray-100"
+                            className="p-1 rounded hover:bg-gray-100 cursor-pointer"
                             title="Good response"
                           >
                             <ThumbsUp size={14} className="text-gray-400" />
                           </button>
                           <button
-                            className="p-1 rounded hover:bg-gray-100"
+                            className="p-1 rounded hover:bg-gray-100 cursor-pointer"
                             title="Bad response"
                           >
                             <ThumbsDown size={14} className="text-gray-400" />
