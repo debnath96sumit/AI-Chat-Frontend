@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Send, User, Bot, Copy, ThumbsUp, ThumbsDown, Menu, Square, Check } from 'lucide-react';
+import { Send, User, Bot, Copy, ThumbsUp, ThumbsDown, Menu, Square, Check, Paperclip, X, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { chatAPI } from '../utils/api';
+import { chatAPI, mediaAPI } from '../utils/api';
 import Sidebar from './Sidebar.jsx';
 import ConfirmModal from './ConfirmModal.jsx';
 import Modal from './Modal.jsx';
@@ -24,6 +24,8 @@ const ChatBot = () => {
   const [currentChatId, setCurrentChatId] = useState(chatId || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [selectedAttachment, setSelectedAttachment] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [activeSettingsTab, setActiveSettingsTab] = useState(null);
@@ -36,6 +38,8 @@ const ChatBot = () => {
   const inputRef = useRef(null);
   const eventSourceRef = useRef(null);
 
+  const CHAT_ALLOWED_MIMETYPES = ['application/pdf', 'text/plain'];
+  const CHAT_MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
   const openSettingsModal = (tab) => {
     setActiveSettingsTab(tab);
     setSettingsModalOpen(true);
@@ -114,7 +118,8 @@ const ChatBot = () => {
         text: msg.content,
         isBot: msg.role === 'assistant' || msg.sender === 'ai',
         sender: msg.role === 'assistant' ? 'ai' : 'user',
-        timestamp: new Date(msg.createdAt || msg.timestamp)
+        timestamp: new Date(msg.createdAt || msg.timestamp),
+        attachments: msg.attachments || []
       }));
 
       setMessages(transformedMessages);
@@ -144,26 +149,28 @@ const ChatBot = () => {
   };
 
   const handleSendMessage = async () => {
-    if (!inputText.trim() || isTyping) return;
+    if (!inputText.trim() || isTyping || isUploading) return;
 
     const userMessage = {
       id: Date.now(),
       text: inputText,
       sender: 'user',
       isBot: false,
-      timestamp: new Date()
+      timestamp: new Date(),
+      attachments: selectedAttachment ? [selectedAttachment] : []
     };
 
     setMessages(prev => [...prev, userMessage]);
 
     const currentInput = inputText;
+    const currentAttachment = selectedAttachment;
     setInputText('');
+    setSelectedAttachment(null);
     setIsTyping(true);
     setError('');
 
     try {
-      // 1️⃣ POST message (NEW API)
-      const response = await chatAPI.sendMessage(currentInput, currentChatId, selectedProvider, selectedModelId);
+      const response = await chatAPI.sendMessage(currentInput, currentChatId, selectedProvider, selectedModelId, currentAttachment);
       // set selected model id
       setSelectedModelId(response.data?.chat?.modelId);
       // set selected provider
@@ -260,9 +267,59 @@ const ChatBot = () => {
   const handleCopy = (id, text) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000); // revert after 2s
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!CHAT_ALLOWED_MIMETYPES.includes(file.type)) {
+      setError('Invalid file type. Only PDF and TXT files are allowed.');
+      return;
+    }
+    if (file.size > CHAT_MAX_FILE_SIZE_BYTES) {
+      setError('File size exceeds 5MB limit.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    setIsUploading(true);
+    setError('');
+    try {
+      const response = await mediaAPI.uploadChatFile(formData);
+      const { _id, url, originalName, mimetype } = response.data?.data || response.data || {};
+
+      if (_id && url) {
+        setSelectedAttachment({
+          mediaId: _id,
+          url,
+          originalName: originalName || file.name,
+          mimetype: mimetype || file.type
+        });
+      } else {
+        setError('Failed to upload file. Invalid response format.');
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+      setError('Failed to upload file.');
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
+  }
+
+  const deleteFile = async (fileId) => {
+    try {
+      await mediaAPI.deleteFile(fileId);
+      if (selectedAttachment?.mediaId === fileId) {
+        setSelectedAttachment(null);
+      }
+    } catch (err) {
+      console.error('Error deleting file:', err);
+      setError('Failed to delete file.');
+    }
+  }
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -401,9 +458,23 @@ const ChatBot = () => {
                             {message.text}
                           </ReactMarkdown>
                         ) : (
-                          <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                            {message.text}
-                          </p>
+                          <div className="flex flex-col gap-2">
+                            {message.attachments && message.attachments.length > 0 && (
+                              <div className="flex flex-col gap-2">
+                                {message.attachments.map((file, idx) => (
+                                  <div key={idx} className="flex items-center gap-2 p-2 bg-white/10 rounded-lg w-max max-w-full">
+                                    <Paperclip size={16} />
+                                    <a href={file.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium hover:underline truncate">
+                                      {file.originalName}
+                                    </a>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                              {message.text}
+                            </p>
+                          </div>
                         )}
                       </div>
 
@@ -411,11 +482,11 @@ const ChatBot = () => {
                       {(message.isBot || message.sender === 'ai') && (
                         <div className="flex items-center gap-1 mt-2">
                           <button
-                            onClick={() => handleCopy(message._id, message.text)}
+                            onClick={() => handleCopy(message.id, message.text)}
                             className="p-1 rounded hover:bg-gray-100 cursor-pointer"
                             title="Copy message"
                           >
-                            {copiedId === message._id
+                            {copiedId === message.id
                               ? <Check size={14} className="text-green-500" />
                               : <Copy size={14} className="text-gray-400" />
                             }
@@ -505,14 +576,46 @@ const ChatBot = () => {
                   )}
                 </div>
               )}
-              <div className={`relative flex items-end gap-3 bg-gray-50 rounded-2xl border border-gray-200 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 ${messages.length === 0 ? 'shadow-sm' : ''}`}>
+              {selectedAttachment && (
+                <div className="mb-3 p-3 bg-white border border-gray-200 rounded-xl flex items-center justify-between w-max max-w-full shadow-sm">
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0">
+                      <Paperclip size={16} />
+                    </div>
+                    <div className="truncate text-sm font-medium text-gray-700 max-w-[200px]">
+                      {selectedAttachment.originalName}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => deleteFile(selectedAttachment.mediaId)}
+                    className="ml-4 p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
+                    title="Remove file"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+              {isUploading && (
+                <div className="mb-3 p-2 text-sm text-gray-500 flex items-center gap-2">
+                  <Loader2 size={16} className="animate-spin text-blue-600" />
+                  <span>Uploading file...</span>
+                </div>
+              )}
+              <div className={`relative flex items-end gap-2 bg-gray-50 rounded-2xl border border-gray-200 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 ${messages.length === 0 ? 'shadow-sm' : ''}`}>
+                <label
+                  className={`mb-2 ml-2 p-2 rounded-lg transition-colors cursor-pointer shrink-0 ${selectedAttachment || isUploading ? 'text-gray-300 pointer-events-none' : 'text-gray-500 hover:text-blue-600 hover:bg-gray-200'}`}
+                  title={selectedAttachment ? 'Only one file allowed' : 'Attach file'}
+                >
+                  <Paperclip size={20} />
+                  <input type="file" className="hidden" onChange={handleFileChange} disabled={!!selectedAttachment || isUploading} />
+                </label>
                 <textarea
                   ref={inputRef}
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Message AI Assistant..."
-                  className="flex-1 min-h-[44px] max-h-32 px-4 py-3 bg-transparent border-none outline-none resize-none placeholder-gray-500"
+                  className="flex-1 min-h-[44px] max-h-32 py-3 px-2 bg-transparent border-none outline-none resize-none placeholder-gray-500"
                   rows={1}
                   style={{
                     height: 'auto',
@@ -535,7 +638,7 @@ const ChatBot = () => {
                 ) : (
                   <button
                     onClick={handleSendMessage}
-                    disabled={!inputText.trim()}
+                    disabled={!inputText.trim() || isUploading}
                     className="m-2 p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors"
                   >
                     <Send size={16} />

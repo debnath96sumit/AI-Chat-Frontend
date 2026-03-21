@@ -195,8 +195,8 @@ export const chatAPI = {
     return axiosInstance.get('/api/v1/chat/llm-models');
   },
 
-  sendMessage: async (message, chatId, provider, modelId) => {
-    return axiosInstance.post('/api/v1/chat/send-message', { message, chatId, provider, modelId });
+  sendMessage: async (message, chatId, provider, modelId, attachment) => {
+    return axiosInstance.post('/api/v1/chat/send-message', { message, chatId, provider, modelId, attachment });
   },
 
   getAllChats: async (limit = 10, page = 1) => {
@@ -223,6 +223,16 @@ export const mediaAPI = {
         'Content-Type': 'multipart/form-data',
       },
     });
+  },
+  uploadChatFile: async (formData) => {
+    return axiosInstance.post('/api/v1/media/upload-chat-file', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  deleteFile: async (fileId) => {
+    return axiosInstance.delete(`/api/v1/media/delete/${fileId}`);
   }
 }
 export default {
