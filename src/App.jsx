@@ -13,6 +13,9 @@ import VerifyOTP from './components/auth/VerifyOTP';
 import PublicRoute from './components/auth/PublicRoute';
 import NotFound from './components/NotFound';
 import GithubAuthCallback from './components/auth/GithubAuthCallback';
+import Plans from './components/Plans';
+import SubscriptionSuccessPage from './components/auth/SubscriptionSuccess';
+import SubscriptionCancelPage from './components/auth/SubscriptionCancel';
 
 function App() {
   return (
@@ -27,6 +30,9 @@ function App() {
           <Route path="/verify-otp" element={<PublicRoute><VerifyOTP /></PublicRoute>} />
           <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
           <Route path="/auth/github/callback" element={<PublicRoute><GithubAuthCallback /></PublicRoute>} />
+          <Route path="/plans" element={<Plans />} />
+          <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
+          <Route path="/subscription/cancel" element={<SubscriptionCancelPage />} />
           <Route
             path="/new"
             element={

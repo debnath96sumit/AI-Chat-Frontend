@@ -235,9 +235,19 @@ export const mediaAPI = {
     return axiosInstance.delete(`/api/v1/media/delete/${fileId}`);
   }
 }
+
+export const subscriptionAPI = {
+  getPlans: async () => await axiosInstance.get("/api/v1/subscription/plans"),
+  getMySubscription: async () => await axiosInstance.get("/api/v1/subscription/me"),
+  createCheckout: async (planId) => await axiosInstance.post("/api/v1/subscription/checkout", { planId }),
+  cancelSubscription: async (id) => await axiosInstance.post(`/api/v1/subscription/${id}`),
+  subscriptionSuccess: async (sessionId) => await axiosInstance.get(`/api/v1/subscription/success?session_id=${sessionId}`),
+}
+
 export default {
   auth: authAPI,
   user: userAPI,
   chat: chatAPI,
   media: mediaAPI,
+  subscription: subscriptionAPI,
 };
