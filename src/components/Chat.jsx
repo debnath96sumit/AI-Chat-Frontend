@@ -9,6 +9,7 @@ import Modal from './Modal.jsx';
 import Loading from './Loading.jsx';
 import UserProfile from './auth/UserProfile.jsx';
 import ChangePassword from './auth/ChangePassword.jsx';
+import SubscriptionDetails from './auth/SubscriptionDetails.jsx';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -555,7 +556,12 @@ const ChatBot = () => {
                     className="text-xs bg-gray-50 border border-gray-200 text-gray-700 py-1.5 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                   >
                     {Object.entries(availableModels).map(([key, provider]) => (
-                      <option key={key} value={key}>
+                      <option
+                        key={key}
+                        value={key}
+                        disabled={provider.tier !== 'free' && !user?.hasActiveSubscription}
+                        className={`${provider.tier !== 'free' && !user?.hasActiveSubscription ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                      >
                         {provider.label}
                       </option>
                     ))}
@@ -569,7 +575,7 @@ const ChatBot = () => {
                     >
                       {availableModels[selectedProvider].models.map((model) => (
                         <option key={model.id} value={model.id}>
-                          {model.label} {!model.free && '($)'}
+                          {model.label}
                         </option>
                       ))}
                     </select>
@@ -685,6 +691,14 @@ const ChatBot = () => {
         )}
         {activeSettingsTab === 'password-change' && (
           <ChangePassword
+            onClose={() => {
+              setSettingsModalOpen(false);
+              setActiveSettingsTab(null);
+            }}
+          />
+        )}
+        {activeSettingsTab === 'subscription' && (
+          <SubscriptionDetails
             onClose={() => {
               setSettingsModalOpen(false);
               setActiveSettingsTab(null);

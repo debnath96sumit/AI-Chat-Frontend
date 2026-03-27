@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Zap, Shield, Users, ArrowRight, Star, Play } from 'lucide-react';
+import { MessageSquare, Zap, Shield, FileText, Cpu, History, ArrowRight, Star, Play, Check, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const AIChatbotLanding = () => {
@@ -16,19 +16,19 @@ const AIChatbotLanding = () => {
 
   const features = [
     {
-      icon: <Zap className="w-8 h-8" />,
-      title: "Lightning Fast Responses",
-      description: "Get instant, intelligent responses powered by advanced AI technology"
+      icon: <FileText className="w-8 h-8" />,
+      title: "File Upload & Analysis",
+      description: "Upload PDFs and text files and chat with them directly. Extract insights, summarize content, and ask questions about your documents."
     },
     {
-      icon: <Shield className="w-8 h-8" />,
-      title: "Secure & Private",
-      description: "Your conversations are encrypted and protected with enterprise-grade security"
+      icon: <Cpu className="w-8 h-8" />,
+      title: "Multiple AI Models",
+      description: "Switch between top models — Groq, Gemini, Hugging Face and more. Pick the right model for every task."
     },
     {
-      icon: <Users className="w-8 h-8" />,
-      title: "Multi-User Support",
-      description: "Seamlessly handle multiple conversations and user sessions simultaneously"
+      icon: <History className="w-8 h-8" />,
+      title: "Persistent Chat History",
+      description: "Your conversations are saved and always accessible. Pick up right where you left off, across any session."
     }
   ];
 
@@ -50,6 +50,35 @@ const AIChatbotLanding = () => {
       role: "Business Owner",
       content: "Our customers love the instant support. It's like having a 24/7 expert assistant.",
       rating: 5
+    }
+  ];
+
+  const plans = [
+    {
+      name: "Free",
+      price: 0,
+      description: "Get started with the basics",
+      features: [
+        "Access to standard models",
+        "Limited chat history",
+        "No file uploads",
+      ],
+      cta: "Get Started",
+      href: "/sign-up",
+      highlight: false,
+    },
+    {
+      name: "Pro",
+      price: 10,
+      description: "Everything you need, unlocked",
+      features: [
+        "5 file uploads per day",
+        "All models accessible",
+        "Unlimited chat history",
+      ],
+      cta: "Upgrade to Pro",
+      href: "/sign-up?plan=pro",
+      highlight: true,
     }
   ];
 
@@ -99,7 +128,7 @@ const AIChatbotLanding = () => {
             </h1>
             <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
               Experience intelligent conversations with our advanced AI chatbot.
-              Built with React, powered by cutting-edge AI technology.
+              Upload files, switch models, and chat smarter — all in one place.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link to="/sign-up" className="group bg-gradient-to-r from-purple-600 to-cyan-600 px-8 py-4 rounded-full text-lg font-semibold hover:from-purple-700 hover:to-cyan-700 transition-all transform hover:scale-105 flex items-center">
@@ -123,7 +152,7 @@ const AIChatbotLanding = () => {
               Powerful Features
             </h2>
             <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Discover what makes our AI chatbot the perfect solution for your needs
+              Everything you need to have smarter, more productive AI conversations
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
@@ -184,6 +213,64 @@ const AIChatbotLanding = () => {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section id="pricing" className="relative z-10 px-6 py-20">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+              Simple Pricing
+            </h2>
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+              Start free. Upgrade when you need more.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            {plans.map((plan, index) => (
+              <div
+                key={index}
+                className={`relative rounded-2xl p-8 border transition-all duration-300 hover:scale-105 ${plan.highlight
+                    ? 'bg-gradient-to-b from-purple-600/30 to-cyan-600/10 border-purple-400/60 shadow-lg shadow-purple-500/20'
+                    : 'bg-white/5 border-white/10 hover:border-white/20'
+                  }`}
+              >
+                {plan.highlight && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <span className="flex items-center gap-1 bg-gradient-to-r from-purple-500 to-cyan-500 text-white text-sm font-semibold px-4 py-1 rounded-full">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Most Popular
+                    </span>
+                  </div>
+                )}
+                <h3 className="text-2xl font-bold mb-1">{plan.name}</h3>
+                <p className="text-gray-400 text-sm mb-6">{plan.description}</p>
+                <div className="flex items-end gap-1 mb-8">
+                  <span className="text-5xl font-bold">${plan.price}</span>
+                  {plan.price > 0 && <span className="text-gray-400 mb-2">/ month</span>}
+                  {plan.price === 0 && <span className="text-gray-400 mb-2">forever</span>}
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-center gap-3 text-gray-200">
+                      <Check className={`w-5 h-5 flex-shrink-0 ${plan.highlight ? 'text-cyan-400' : 'text-purple-400'}`} />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  to={plan.href}
+                  className={`block text-center px-6 py-3 rounded-full font-semibold transition-all transform hover:scale-105 ${plan.highlight
+                      ? 'bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700'
+                      : 'border border-white/20 hover:border-purple-400/60 hover:bg-white/5'
+                    }`}
+                >
+                  {plan.cta}
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="relative z-10 px-6 py-20">
         <div className="max-w-4xl mx-auto text-center">
@@ -194,9 +281,8 @@ const AIChatbotLanding = () => {
             <p className="text-xl text-gray-300 mb-8">
               Join thousands of users who have transformed their communication with AI
             </p>
-
             <Link to="/sign-up" className="bg-gradient-to-r from-purple-600 to-cyan-600 px-10 py-4 rounded-full text-lg font-semibold hover:from-purple-700 hover:to-cyan-700 transition-all transform hover:scale-105">
-              Start Your Free Trial
+              Start For Free
             </Link>
           </div>
         </div>

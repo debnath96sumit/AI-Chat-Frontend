@@ -240,7 +240,7 @@ export const subscriptionAPI = {
   getPlans: async () => await axiosInstance.get("/api/v1/subscription/plans"),
   getMySubscription: async () => await axiosInstance.get("/api/v1/subscription/me"),
   createCheckout: async (planId) => await axiosInstance.post("/api/v1/subscription/checkout", { planId }),
-  cancelSubscription: async (id) => await axiosInstance.post(`/api/v1/subscription/${id}`),
+  cancelSubscription: async () => await axiosInstance.post(`/api/v1/subscription/cancel`),
   subscriptionSuccess: async (sessionId) => await axiosInstance.get(`/api/v1/subscription/success?session_id=${sessionId}`),
 }
 

@@ -1,4 +1,4 @@
-import { Search, MoreHorizontal, Plus, Settings, MessageSquare, Pencil, Trash2, Check, X } from 'lucide-react';
+import { Search, MoreHorizontal, Plus, Settings, MessageSquare, Pencil, Trash2, Check, X, Zap } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 import { chatAPI } from '../utils/api';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -270,6 +270,19 @@ const Sidebar = ({
                 </span>
               </div>
             </div>
+
+            <button
+              onClick={() => {
+                if (user?.hasActiveSubscription) {
+                  openModal('subscription');
+                } else {
+                  navigate('/plans');
+                }
+                setShowSettingsMenu(false);
+              }}
+              className="w-full text-left px-4 py-2 hover:bg-gray-700 text-sm flex items-center gap-2" >
+              <Zap size={14} className="text-yellow-500" /> Plan Details
+            </button>
 
             <button
               onClick={() => {
