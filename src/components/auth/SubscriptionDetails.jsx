@@ -136,20 +136,20 @@ const SubscriptionDetails = ({ onClose }) => {
                     <div className="h-px bg-white/5 my-4" />
 
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-400 flex items-center gap-2">
+                        <div className="flex items-start justify-between text-sm gap-2">
+                            <span className="text-gray-400 flex items-center gap-2 shrink-0">
                                 <Calendar size={14} />
                                 {isCanceled ? 'Ends on' : 'Next billing date'}
                             </span>
-                            <span className="text-white font-medium">
+                            <span className="text-white font-medium text-right">
                                 {formatDate(subscription.currentPeriodEnd)}
                             </span>
                         </div>
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-400 flex items-center gap-2">
+                        <div className="flex items-start justify-between text-sm gap-2">
+                            <span className="text-gray-400 flex items-center gap-2 shrink-0">
                                 <ShieldCheck size={14} /> Status
                             </span>
-                            <span className={`${isCanceled ? 'text-yellow-500' : 'text-emerald-500'} font-medium`}>
+                            <span className={`${isCanceled ? 'text-yellow-500' : 'text-emerald-500'} font-medium text-right`}>
                                 {isCanceled ? 'Canceled (Active until end)' : 'Auto-renewing'}
                             </span>
                         </div>

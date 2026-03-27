@@ -48,7 +48,7 @@ export default function PlansPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-950 text-white px-6 py-16 relative">
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white px-6 py-16 relative">
             {/* Close Button */}
             <button
                 onClick={() => navigate("/new")}
@@ -77,7 +77,8 @@ export default function PlansPage() {
                         <Spinner size="sm" />
                     </div>
                 ) : (
-                    <div className={`flex flex-wrap gap-6 ${plans.length === 1 ? 'justify-center' : 'grid grid-cols-1 md:grid-cols-2'}`}>
+                    // fix responsiveness issue
+                    <div className={`grid gap-6 ${plans.length === 1 ? 'grid-cols-1 max-w-sm mx-auto' : 'grid-cols-1 md:grid-cols-2'}`}>
                         {plans.map((plan) => {
                             const isPro = plan.tier === "pro";
                             const isCurrent = plan.tier === currentTier;
@@ -85,9 +86,9 @@ export default function PlansPage() {
                             return (
                                 <div
                                     key={plan._id}
-                                    className={`relative rounded-xl p-6 flex flex-col w-1/2 ${isPro
-                                        ? "bg-gray-900 border border-yellow-500/20 shadow-[0_0_20px_rgba(234,179,8,0.05)]"
-                                        : "bg-gray-900 border border-white/10"
+                                    className={`relative rounded-xl p-6 flex flex-col ${isPro
+                                        ? "bg-slate-800/50 border border-yellow-500/20 shadow-[0_0_20px_rgba(234,179,8,0.05)]"
+                                        : "bg-slate-800/50 border border-white/10"
                                         }`}
                                 >
                                     {isPro && (

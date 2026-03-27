@@ -123,7 +123,7 @@ const Sidebar = ({
   }, []);
 
   return (
-    <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-80 bg-gray-900 text-white transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0`}>
+    <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-80 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0`}>
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-between p-4 border-b border-gray-700">
           <h2 className="text-lg font-semibold">AI Pasta</h2>
@@ -139,7 +139,7 @@ const Sidebar = ({
           <Link
             to="/new"
             onClick={() => setSidebarOpen(false)}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-600 hover:bg-gray-800 transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-600 hover:bg-slate-800/50 transition-colors"
           >
             <Plus size={16} />
             New chat
@@ -147,7 +147,7 @@ const Sidebar = ({
         </div>
 
         <div className="px-4 pb-3">
-          <div className="relative flex items-center bg-gray-800 rounded-lg px-3 py-2 border border-gray-700 focus-within:border-gray-500 transition-colors">
+          <div className="relative flex items-center bg-slate-800/50 rounded-lg px-3 py-2 border border-gray-700 focus-within:border-gray-500 transition-colors">
             <Search size={16} className="text-gray-400 mr-2 shrink-0" />
             <input
               type="text"
@@ -169,7 +169,7 @@ const Sidebar = ({
               filteredChats.map((chat) => (
                 <div
                   key={chat._id}
-                  className={`relative flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer group hover:bg-gray-800 ${location.pathname.includes(chat._id) ? 'bg-gray-800' : ''
+                  className={`relative flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer group hover:bg-slate-800/50 ${location.pathname.includes(chat._id) ? 'bg-slate-800/50' : ''
                     }`}
                   onClick={() => handleChatOpen(chat._id)}
                 >
@@ -239,16 +239,16 @@ const Sidebar = ({
         <div className="p-4 border-t border-gray-700">
           <button
             onClick={() => setShowSettingsMenu(!showSettingsMenu)}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800/50 transition-colors">
             <Settings size={16} />
             Settings
           </button>
         </div>
         {showSettingsMenu && (
-          <div className="absolute bottom-16 left-4 right-4 bg-gray-800 border border-gray-700 rounded-lg shadow-lg overflow-hidden">
+          <div className="absolute bottom-16 left-4 right-4 bg-slate-800/50 border border-gray-700 rounded-lg shadow-lg overflow-hidden">
             {/* hover area should be 4px from all side */}
             <div
-              className="flex items-center gap-2 px-4 py-2 hover:bg-gray-700 cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 hover:bg-slate-800/50 cursor-pointer"
               onClick={() => {
                 openModal('profile')
                 setShowSettingsMenu(false);

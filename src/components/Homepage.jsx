@@ -135,10 +135,10 @@ const AIChatbotLanding = () => {
                 Try It Now
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <button className="group flex items-center px-8 py-4 rounded-full text-lg font-semibold border border-gray-600 hover:border-purple-400 transition-all">
+              <Link to="https://www.youtube.com/watch?v=rd4_RsRMl7I" target="_blank" className="group flex items-center px-8 py-4 rounded-full text-lg font-semibold border border-gray-600 hover:border-purple-400 transition-all">
                 <Play className="mr-2 w-5 h-5" />
                 Watch Demo
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -229,8 +229,8 @@ const AIChatbotLanding = () => {
               <div
                 key={index}
                 className={`relative rounded-2xl p-8 border transition-all duration-300 hover:scale-105 ${plan.highlight
-                    ? 'bg-gradient-to-b from-purple-600/30 to-cyan-600/10 border-purple-400/60 shadow-lg shadow-purple-500/20'
-                    : 'bg-white/5 border-white/10 hover:border-white/20'
+                  ? 'bg-gradient-to-b from-purple-600/30 to-cyan-600/10 border-purple-400/60 shadow-lg shadow-purple-500/20'
+                  : 'bg-white/5 border-white/10 hover:border-white/20'
                   }`}
               >
                 {plan.highlight && (
@@ -259,8 +259,8 @@ const AIChatbotLanding = () => {
                 <Link
                   to={plan.href}
                   className={`block text-center px-6 py-3 rounded-full font-semibold transition-all transform hover:scale-105 ${plan.highlight
-                      ? 'bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700'
-                      : 'border border-white/20 hover:border-purple-400/60 hover:bg-white/5'
+                    ? 'bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700'
+                    : 'border border-white/20 hover:border-purple-400/60 hover:bg-white/5'
                     }`}
                 >
                   {plan.cta}
