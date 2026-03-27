@@ -3,6 +3,7 @@ import { subscriptionAPI } from "../../utils/api";
 import Badge from "../Badge";
 import Spinner from "../Spinner";
 import { formatDate } from "../../utils/helpers";
+import { Link } from "react-router-dom";
 
 export default function SubscriptionSuccessPage() {
     const [subscription, setSubscription] = useState(null);

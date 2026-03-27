@@ -47,7 +47,11 @@ const SignUp = () => {
                 password: parsed.data.password
             });
             if (response.success) {
-                navigate('/new');
+                if (response.user.hasActiveSubscription) {
+                    navigate('/new');
+                } else {
+                    navigate('/plans');
+                }
             }
         } catch (error) {
             console.log('Sign up error', error);

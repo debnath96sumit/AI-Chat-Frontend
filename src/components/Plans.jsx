@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { X } from "lucide-react";
 import { subscriptionAPI } from "../utils/api";
 import Spinner from "./Spinner";
 import Badge from "./Badge";
+import { useAuth } from "../context/AuthContext";
 
 
 export default function PlansPage() {
@@ -9,18 +12,23 @@ export default function PlansPage() {
     const [loading, setLoading] = useState(true);
     const [checkoutLoading, setCheckoutLoading] = useState(null);
     const [currentTier, setCurrentTier] = useState("free");
+    const { user } = useAuth();
+    const navigate = useNavigate();
 
     useEffect(() => {
         (async () => {
-            const [plansRes, subRes] = await Promise.all([subscriptionAPI.getPlans(), subscriptionAPI.getMySubscription()]);
-            console.log(subRes);
-
-            setPlans(plansRes.data);
-            if (subRes.data.length > 0) {
-                const active = subRes.data?.find((s) => s.status === "active");
-                if (active) setCurrentTier(active.plan_details.tier);
+            try {
+                const [plansRes, subRes] = await Promise.all([subscriptionAPI.getPlans(), subscriptionAPI.getMySubscription()]);
+                setPlans(plansRes.data);
+                if (subRes.data.length > 0) {
+                    const active = subRes.data?.find((s) => s.status === "active");
+                    if (active) setCurrentTier(active.plan_details.tier);
+                }
+            } catch (error) {
+                console.error("Error fetching plans:", error);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         })();
     }, []);
 
@@ -29,7 +37,9 @@ export default function PlansPage() {
         setCheckoutLoading(plan._id);
         try {
             const res = await subscriptionAPI.createCheckout(plan._id);
-            window.open(res.data.url, "_blank");
+            if (res.data?.url) {
+                window.location.href = res.data.url;
+            }
         } catch (e) {
             console.error(e);
         } finally {
@@ -38,13 +48,28 @@ export default function PlansPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-950 text-white px-6 py-16">
+        <div className="min-h-screen bg-gray-950 text-white px-6 py-16 relative">
+            {/* Close Button */}
+            <button
+                onClick={() => navigate("/new")}
+                className="absolute top-8 right-8 p-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all group border border-white/10 cursor-pointer"
+                title="Close"
+            >
+                <X size={28} className="group-hover:scale-110 transition-transform" />
+            </button>
+
             <div className="max-w-3xl mx-auto">
                 {/* Header */}
                 <div className="text-center mb-14">
-                    <p className="text-xs font-semibold tracking-widest text-gray-500 uppercase mb-3">Pricing</p>
-                    <h1 className="text-4xl font-bold mb-3">Choose your plan</h1>
-                    <p className="text-gray-400 text-base">Start free. Upgrade when you need more.</p>
+                    <p className="text-xs font-semibold tracking-widest text-yellow-500/80 uppercase mb-3">Pricing</p>
+                    <h1 className="text-4xl font-bold mb-3">
+                        {user?.hasActiveSubscription ? "Manage your subscription" : "Choose your plan"}
+                    </h1>
+                    <p className="text-gray-400 text-base">
+                        {user?.hasActiveSubscription
+                            ? "Scale your usage as your needs grow."
+                            : "Start free. Upgrade when you need more."}
+                    </p>
                 </div>
 
                 {loading ? (
@@ -61,7 +86,7 @@ export default function PlansPage() {
                                 <div
                                     key={plan._id}
                                     className={`relative rounded-xl p-6 flex flex-col w-1/2 ${isPro
-                                        ? "bg-gray-900 border border-yellow-500/20"
+                                        ? "bg-gray-900 border border-yellow-500/20 shadow-[0_0_20px_rgba(234,179,8,0.05)]"
                                         : "bg-gray-900 border border-white/10"
                                         }`}
                                 >

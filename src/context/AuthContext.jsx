@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }) => {
       setToken(data.data.accessToken);
       setUser(data.data.user);
 
-      return { success: true };
+      return { success: true, user: data.data.user };
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -66,7 +66,7 @@ export const AuthProvider = ({ children }) => {
       setToken(data.data.accessToken);
       setUser(data.data.user);
 
-      return { success: true };
+      return { success: true, user: data.data.user };
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -85,7 +85,7 @@ export const AuthProvider = ({ children }) => {
       setToken(data.accessToken);
       setUser(data.user);
 
-      return { success: true };
+      return { success: true, user: data.user };
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -102,17 +102,11 @@ export const AuthProvider = ({ children }) => {
     } finally {
       localStorage.removeItem('token');
       localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user');
       setToken(null);
       setRefreshTokenState(null);
       setUser(null);
       navigate('/sign-in');
     }
-  };
-
-  // Update user data in context
-  const updateUser = (updatedUser) => {
-    setUser(updatedUser);
   };
 
   const updateProfileDetails = async (formData) => {
@@ -125,31 +119,27 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Refresh user profile from API
   const refreshUser = async () => {
     try {
       const data = await userAPI.getProfile();
       setUser(data.data);
-      return { success: true };
+      return { success: true, user: data.data };
     } catch (error) {
       return { success: false, error: error.message };
     }
   };
 
   const value = {
-    // State
     user,
     token,
     refreshToken,
     isAuthenticated: !!token,
     loading,
 
-    // Methods
     login,
     signup,
     socialLogin,
     logout,
-    updateUser,
     refreshUser,
     setToken,
     setRefreshTokenState,

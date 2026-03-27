@@ -30,9 +30,9 @@ function App() {
           <Route path="/verify-otp" element={<PublicRoute><VerifyOTP /></PublicRoute>} />
           <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
           <Route path="/auth/github/callback" element={<PublicRoute><GithubAuthCallback /></PublicRoute>} />
-          <Route path="/plans" element={<Plans />} />
-          <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
-          <Route path="/subscription/cancel" element={<SubscriptionCancelPage />} />
+          <Route path="/plans" element={<ProtectedRoute><Plans /></ProtectedRoute>} />
+          <Route path="/subscription/success" element={<ProtectedRoute><SubscriptionSuccessPage /></ProtectedRoute>} />
+          <Route path="/subscription/cancel" element={<ProtectedRoute><SubscriptionCancelPage /></ProtectedRoute>} />
           <Route
             path="/new"
             element={
