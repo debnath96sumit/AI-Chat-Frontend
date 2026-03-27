@@ -14,6 +14,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { pushToast } from '../utils/toaster.js';
 
 const ChatBot = () => {
   const { chatId } = useParams();
@@ -24,7 +25,6 @@ const ChatBot = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentChatId, setCurrentChatId] = useState(chatId || null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [selectedAttachment, setSelectedAttachment] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
@@ -104,7 +104,6 @@ const ChatBot = () => {
   // Load chat history from backend
   const loadChatHistory = async (chatId, page = 1, limit = 50) => {
     setLoading(true);
-    setError('');
 
     try {
       const data = await chatAPI.getChatDetails(chatId, page, limit);
@@ -126,7 +125,6 @@ const ChatBot = () => {
       setMessages(transformedMessages);
     } catch (err) {
       console.error('Error loading chat history:', err);
-      setError('Failed to load chat history');
       setMessages([
         {
           id: 1,
@@ -168,7 +166,6 @@ const ChatBot = () => {
     setInputText('');
     setSelectedAttachment(null);
     setIsTyping(true);
-    setError('');
 
     try {
       const response = await chatAPI.sendMessage(currentInput, currentChatId, selectedProvider, selectedModelId, currentAttachment);
@@ -190,7 +187,6 @@ const ChatBot = () => {
 
     } catch (err) {
       console.error('Error sending message:', err);
-      setError('Failed to send message. Please try again.');
       setIsTyping(false);
 
       setMessages(prev => [...prev, {
@@ -216,43 +212,71 @@ const ChatBot = () => {
     let aiText = '';
 
     eventSource.onmessage = (event) => {
+      let parsed;
 
-      if (event.data === '__END__') {
-        eventSource.close();
-        eventSourceRef.current = null;
+      try {
+        parsed = JSON.parse(event.data);
+      } catch {
+        console.error('Invalid SSE payload:', event.data);
         return;
       }
 
-      aiText += event.data;
+      switch (parsed.type) {
+        case 'chunk': {
+          aiText += parsed.content;
 
-      setMessages((prev) => {
-        const last = prev[prev.length - 1];
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
 
-        if (last?.sender === 'ai') {
-          return [
-            ...prev.slice(0, -1),
-            {
-              ...last,
-              text: aiText
+            if (last?.sender === 'ai') {
+              return [
+                ...prev.slice(0, -1),
+                { ...last, text: aiText },
+              ];
+            } else {
+              return [
+                ...prev,
+                {
+                  id: Date.now(),
+                  sender: 'ai',
+                  text: aiText,
+                  isBot: true,
+                  timestamp: new Date(),
+                },
+              ];
             }
-          ];
-        } else {
-          return [
-            ...prev,
-            {
-              id: Date.now(),
-              sender: 'ai',
-              text: aiText,
-              isBot: true,
-              timestamp: new Date()
-            }
-          ];
+          });
+
+          break;
         }
-      });
+
+        case 'end': {
+          eventSource.close();
+          eventSourceRef.current = null;
+          break;
+        }
+
+        case 'error': {
+          pushToast({ message: parsed.message, type: 'error' });
+
+          eventSource.close();
+          eventSourceRef.current = null;
+          break;
+        }
+
+        default:
+          console.warn('Unknown SSE event:', parsed);
+      }
     };
 
     eventSource.onerror = (err) => {
       console.error('SSE error:', err);
+
+      pushToast({
+        message: 'Connection lost. Please try again.',
+        type: 'error',
+      });
+
       eventSource.close();
       eventSourceRef.current = null;
     };
@@ -275,18 +299,17 @@ const ChatBot = () => {
     const file = e.target.files[0];
     if (!file) return;
     if (!CHAT_ALLOWED_MIMETYPES.includes(file.type)) {
-      setError('Invalid file type. Only PDF and TXT files are allowed.');
+      pushToast({ message: 'Invalid file type. Only PDF and TXT files are allowed.', type: 'error' });
       return;
     }
     if (file.size > CHAT_MAX_FILE_SIZE_BYTES) {
-      setError('File size exceeds 5MB limit.');
+      pushToast({ message: 'File size exceeds 5MB limit.', type: 'error' });
       return;
     }
 
     const formData = new FormData();
     formData.append('file', file);
     setIsUploading(true);
-    setError('');
     try {
       const response = await mediaAPI.uploadChatFile(formData);
       const { _id, url, originalName, mimetype } = response.data?.data || response.data || {};
@@ -299,11 +322,11 @@ const ChatBot = () => {
           mimetype: mimetype || file.type
         });
       } else {
-        setError('Failed to upload file. Invalid response format.');
+        pushToast({ message: 'Failed to upload file. Invalid response format.', type: 'error' });
       }
     } catch (err) {
       console.error('Upload error:', err);
-      setError('Failed to upload file.');
+      pushToast({ message: 'Failed to upload file.', type: 'error' });
     } finally {
       setIsUploading(false);
       e.target.value = '';
@@ -318,7 +341,7 @@ const ChatBot = () => {
       }
     } catch (err) {
       console.error('Error deleting file:', err);
-      setError('Failed to delete file.');
+      pushToast({ message: 'Failed to delete file.', type: 'error' });
     }
   }
   // Cleanup on unmount
@@ -365,13 +388,6 @@ const ChatBot = () => {
             </span>
           </div>
         </div>
-
-        {/* Error Banner */}
-        {error && (
-          <div className="bg-red-50 border-b border-red-200 px-4 py-3">
-            <p className="text-sm text-red-600">{error}</p>
-          </div>
-        )}
 
         {/* Main Content Area */}
         <div className={`flex-1 flex flex-col min-h-0 ${messages.length === 0 ? 'justify-center' : ''}`}>

@@ -281,7 +281,7 @@ const Sidebar = ({
                 setShowSettingsMenu(false);
               }}
               className="w-full text-left px-4 py-2 hover:bg-gray-700 text-sm flex items-center gap-2" >
-              <Zap size={14} className="text-yellow-500" /> Plan Details
+              <Zap size={14} className="text-yellow-500" /> {user?.hasActiveSubscription ? 'Plan Details' : 'Upgrade to Pro'}
             </button>
 
             <button
