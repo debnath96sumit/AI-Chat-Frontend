@@ -38,7 +38,10 @@ const ChatBot = () => {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const eventSourceRef = useRef(null);
-
+  const chunkBufferRef = useRef('');
+  const flushTimerRef = useRef(null);
+  const chatContainerRef = useRef(null);
+  const bottomRef = useRef(null);
   const CHAT_ALLOWED_MIMETYPES = ['application/pdf', 'text/plain'];
   const CHAT_MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
   const openSettingsModal = (tab) => {
@@ -209,7 +212,7 @@ const ChatBot = () => {
 
     eventSourceRef.current = eventSource;
 
-    let aiText = '';
+    // let aiText = '';
 
     eventSource.onmessage = (event) => {
       let parsed;
@@ -223,36 +226,41 @@ const ChatBot = () => {
 
       switch (parsed.type) {
         case 'chunk': {
-          aiText += parsed.content;
+          chunkBufferRef.current += parsed.content;
 
-          setMessages((prev) => {
-            const last = prev[prev.length - 1];
+          if (!flushTimerRef.current) {
+            flushTimerRef.current = setTimeout(() => {
+              const buffered = chunkBufferRef.current;
+              chunkBufferRef.current = '';
+              flushTimerRef.current = null;
 
-            if (last?.sender === 'ai') {
-              return [
-                ...prev.slice(0, -1),
-                { ...last, text: aiText },
-              ];
-            } else {
-              return [
-                ...prev,
-                {
-                  id: Date.now(),
-                  sender: 'ai',
-                  text: aiText,
-                  isBot: true,
-                  timestamp: new Date(),
-                },
-              ];
-            }
-          });
-
+              setMessages((prev) => {
+                const last = prev[prev.length - 1];
+                if (last?.sender === 'ai') {
+                  return [...prev.slice(0, -1), { ...last, text: last.text + buffered }];
+                }
+                return [...prev, { id: Date.now(), sender: 'ai', text: buffered, isBot: true, timestamp: new Date() }];
+              });
+            }, 30);
+          }
           break;
         }
 
         case 'end': {
+          clearTimeout(flushTimerRef.current);
+          flushTimerRef.current = null;
+          // flush anything remaining in buffer
+          if (chunkBufferRef.current) {
+            setMessages(prev => {
+              const last = prev[prev.length - 1];
+              if (last?.sender === 'ai') {
+                return [...prev.slice(0, -1), { ...last, text: last.text + chunkBufferRef.current }];
+              }
+              return prev;
+            });
+            chunkBufferRef.current = '';
+          }
           eventSource.close();
-          eventSourceRef.current = null;
           break;
         }
 
@@ -282,6 +290,18 @@ const ChatBot = () => {
     };
   };
 
+  const isNearBottom = () => {
+    const container = chatContainerRef.current;
+    if (!container) return false;
+    return container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+  };
+
+  // in your useEffect that watches messages
+  useEffect(() => {
+    if (isNearBottom()) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -402,7 +422,7 @@ const ChatBot = () => {
 
           {/* Messages Container */}
           {messages.length > 0 && (
-            <div className="flex-1 overflow-y-auto px-4 py-6">
+            <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-4 py-6">
               <div className="max-w-3xl mx-auto space-y-6">
                 {messages.map((message) => (
                   <div
@@ -553,41 +573,42 @@ const ChatBot = () => {
 
                 <div ref={messagesEndRef} />
               </div>
+              <div ref={bottomRef} />
             </div>
           )}
 
-          {/* Input Area */}
-          <div className={messages.length === 0 ? 'w-full px-4' : 'border-t border-gray-200 bg-white px-4 py-4'}>
-            <div className={messages.length === 0 ? 'max-w-3xl mx-auto w-full' : 'max-w-3xl mx-auto'}>
-              {/* Model Selection UI */}
+          {/* Input Area - sticky at bottom, select boxes float above */}
+          <div className={`sticky bottom-0 z-10 bg-gray-50 ${messages.length === 0 ? 'w-full px-4' : 'px-4 py-4'}`}>
+            <div className={`relative ${messages.length === 0 ? 'max-w-3xl mx-auto w-full' : 'max-w-3xl mx-auto'}`}>
+              {/* Model Selection UI - floating above input */}
               {availableModels && Object.keys(availableModels).length > 0 && (
-                <div className="flex gap-2 mb-2">
+                <div className="absolute bottom-full left-0 flex gap-2 mb-2 z-20">
                   <select
                     value={selectedProvider}
                     onChange={(e) => {
                       const newProvider = e.target.value;
+                      const isLocked = availableModels[newProvider]?.tier !== 'free' && !user?.hasActiveSubscription;
+                      if (isLocked) return;
                       setSelectedProvider(newProvider);
                       setSelectedModelId(availableModels[newProvider]?.defaultModel || '');
                     }}
-                    className="text-xs bg-gray-50 border border-gray-200 text-gray-700 py-1.5 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    className="text-xs bg-white/90 backdrop-blur-sm border border-gray-200 text-gray-700 py-1.5 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 cursor-pointer shadow-sm"
                   >
-                    {Object.entries(availableModels).map(([key, provider]) => (
-                      <option
-                        key={key}
-                        value={key}
-                        disabled={provider.tier !== 'free' && !user?.hasActiveSubscription}
-                        className={`${provider.tier !== 'free' && !user?.hasActiveSubscription ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                      >
-                        {provider.label}
-                      </option>
-                    ))}
+                    {Object.entries(availableModels).map(([key, provider]) => {
+                      const isLocked = provider.tier !== 'free' && !user?.hasActiveSubscription;
+                      return (
+                        <option key={key} value={key} disabled={isLocked}>
+                          {isLocked ? `🔒 ${provider.label}` : provider.label}
+                        </option>
+                      );
+                    })}
                   </select>
 
                   {availableModels[selectedProvider]?.models && (
                     <select
                       value={selectedModelId}
                       onChange={(e) => setSelectedModelId(e.target.value)}
-                      className="text-xs bg-gray-50 border border-gray-200 text-gray-700 py-1.5 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 max-w-[200px] truncate"
+                      className="text-xs bg-white/90 backdrop-blur-sm border border-gray-200 text-gray-700 py-1.5 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 max-w-[200px] truncate cursor-pointer shadow-sm"
                     >
                       {availableModels[selectedProvider].models.map((model) => (
                         <option key={model.id} value={model.id}>
