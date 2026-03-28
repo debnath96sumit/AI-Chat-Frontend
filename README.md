@@ -11,6 +11,8 @@ A modern, full-featured AI chat interface built with **React + Vite**, supportin
 - **User Authentication** — Secure login and registration flow
 - **Chat History** — Persistent conversation history with support for multiple independent chat sessions
 - **Markdown Rendering** — AI responses rendered with full Markdown support (code blocks, lists, headings, etc.)
+- **File Upload & Analysis** — Upload PDFs and text files and chat with them directly. Extract insights, summarize content, and ask questions about your documents.
+- **Subscription Plans** — Added subscriptions for users to upgrade their plans.
 
 ---
 
@@ -21,6 +23,8 @@ A modern, full-featured AI chat interface built with **React + Vite**, supportin
 ![Home](./screenshots/home-screen.png)
 ![Home](./screenshots/profile.png)
 ![Home](./screenshots/sign-in.png)
+![Home](./screenshots/subscription.png)
+![Home](./screenshots/subscription-details.png)
 
 ---
 

@@ -61,7 +61,8 @@ const AIChatbotLanding = () => {
       features: [
         "Access to standard models",
         "Limited chat history",
-        "No file uploads",
+        "1 file uploads per day",
+        "Limited token usage"
       ],
       cta: "Get Started",
       href: "/sign-up",
@@ -75,9 +76,10 @@ const AIChatbotLanding = () => {
         "5 file uploads per day",
         "All models accessible",
         "Unlimited chat history",
+        "10 times more token usage than free plan"
       ],
       cta: "Upgrade to Pro",
-      href: "/sign-up?plan=pro",
+      href: "/sign-up",
       highlight: true,
     }
   ];

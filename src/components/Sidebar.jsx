@@ -245,7 +245,7 @@ const Sidebar = ({
           </button>
         </div>
         {showSettingsMenu && (
-          <div className="absolute bottom-16 left-4 right-4 bg-slate-800/50 border border-gray-700 rounded-lg shadow-lg overflow-hidden">
+          <div className="absolute bottom-16 left-4 right-4 bg-gray-800 border border-gray-700 rounded-lg shadow-lg overflow-hidden">
             {/* hover area should be 4px from all side */}
             <div
               className="flex items-center gap-2 px-4 py-2 hover:bg-slate-800/50 cursor-pointer"
